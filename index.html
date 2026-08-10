@@ -254,7 +254,22 @@
   }
 
   // ---------- PeerJS ----------
-  function broadcast(msg) {
+  // STUN + free public TURN (TCP fallback for strict mobile NATs — UDP-only
+  // WebRTC fails on many Indian mobile networks without it).
+  var RTC_CONFIG = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      {
+        urls: ['turn:openrelay.metered.ca:80?transport=tcp', 'turn:openrelay.metered.ca:443?transport=tcp'],
+        username: 'openrelayproject',
+        credential: 'openrelayproject',
+      },
+    ],
+  };
+  function newPeer(id) {
+    return new Peer(id, { config: RTC_CONFIG });
+  }  function broadcast(msg) {
     var payload = JSON.stringify(msg);
     conns.forEach(function (c) { if (c.open) c.send(payload); });
   }
@@ -288,6 +303,11 @@
   }
   function wireConn(c, onOpen) {
     c.on('open', function () {
+      // dedupe: if this peer already has a live channel, drop the new one
+      if (conns.some(function (x) { return x !== c && x.peer === c.peer && x.open; })) {
+        try { c.close(); } catch (e) {}
+        return;
+      }
       conns.push(c);
       setStatus('connected to room ' + roomCode, true);
       if (isHost) {
@@ -309,14 +329,19 @@
   function makeRoom() {
     roomCode = randCode();
     isHost = true;
-    peer = new Peer(roomCode);
+    peer = newPeer(roomCode);
     peer.on('open', function (id) {
-      setStatus('hosting room ' + id, true);
+      setStatus('hosting room ' + id + ' — keep this tab open', true);
       $('inviteLine').classList.remove('hidden');
       $('inviteCode').textContent = location.origin + location.pathname + '?room=' + id;
       showStage();
+      toast('Room created — send the invite link. Keep this tab open!');
     });
     peer.on('connection', function (c) { wireConn(c); });
+    peer.on('disconnected', function () {
+      // phone slept / network blip — try to come back
+      try { peer.reconnect(); } catch (e) {}
+    });
     peer.on('error', function (err) {
       if (err.type === 'unavailable-id') {
         toast('Room code taken — try again.');
@@ -334,16 +359,37 @@
     if (!code) return toast('Enter a room code.');
     roomCode = code;
     isHost = false;
-    peer = new Peer('g-' + Math.random().toString(36).slice(2, 8));
+    peer = newPeer('g-' + Math.random().toString(36).slice(2, 8));
+    var attempts = 0;
+    var connected = false;
+    var pendingConn = null;
     peer.on('open', function () {
       setStatus('joining ' + roomCode + '…', false);
-      var c = peer.connect(code, { reliable: true });
-      wireConn(c, function () { showStage(); });
+      tryConnect();
     });
     peer.on('error', function (err) {
-      if (err.type === 'peer-unavailable') toast('Room not found — check the code.');
-      else if (err.type === 'network' || err.type === 'server-error') toast('Sync broker unreachable — check internet.');
+      if (err.type === 'network' || err.type === 'server-error') {
+        toast('Sync broker unreachable — check internet.');
+      } else if (err.type === 'peer-unavailable' && !connected) {
+        // host not ready yet — retry
+      }
     });
+    function tryConnect() {
+      if (connected || attempts >= 12) {
+        if (!connected) toast('Couldn\'t reach the room. Make sure the host\'s tab is open, then try again.');
+        return;
+      }
+      attempts++;
+      if (pendingConn) { try { pendingConn.close(); } catch (e) {} }
+      pendingConn = peer.connect(code, { reliable: true });
+      wireConn(pendingConn, function () {
+        connected = true;
+        pendingConn = null;
+        showStage();
+        toast('Joined room ' + roomCode + '!');
+      });
+      setTimeout(tryConnect, 2500);
+    }
   }
 
   // ---------- video ----------
