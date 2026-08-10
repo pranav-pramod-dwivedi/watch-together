@@ -137,7 +137,7 @@
 
 <header>
   <div class="logo">watch<span>-together</span></div>
-  <div class="status" id="status"><span class="dot"></span><span id="statusText">not connected</span></div>
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">no room yet — load a video, then create a room</span></div>
 </header>
 
 <main>
@@ -162,8 +162,8 @@
     <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> works too.</p>
   </section>
 
-  <!-- Step 2: room -->
-  <section class="panel hidden" id="roomPanel">
+  <!-- Step 2: room (always visible) -->
+  <section class="panel" id="roomPanel">
     <h2>2 · Room</h2>
     <div class="row" style="margin-bottom:0.9rem">
       <button id="createRoom">＋ Create room</button>
@@ -294,6 +294,7 @@
         c.send(JSON.stringify({ t: 'sync', url: videoUrl, playing: !video.paused && video.currentTime > 0 }));
         appendChat('sys', 'Someone joined the room.');
       }
+      $('chatPanel').classList.remove('hidden');
       onOpen && onOpen();
     });
     c.on('data', handleMsg);
@@ -362,11 +363,11 @@
     }
     if (isHost && conns.length) broadcast({ t: 'video', url: url });
     toast(drive ? 'Video ready — press play in the player, then hit the countdown for everyone else.' : 'Video loaded' + (isHost ? ' — shared with the room.' : ''));
+    showStage();
+    if (!roomCode) toast('Now hit ＋ Create room and send the invite link to your friends.');
   }
   function showStage() {
-    $('roomPanel').classList.remove('hidden');
     $('stagePanel').classList.remove('hidden');
-    $('chatPanel').classList.remove('hidden');
   }
   function syncButton() {
     $('playBtn').textContent = video.paused ? '▶ Play' : '❚❚ Pause';
