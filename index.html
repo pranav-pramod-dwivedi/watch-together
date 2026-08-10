@@ -178,11 +178,15 @@
     <div class="stage" id="stage">
       <div class="placeholder" id="stagePlaceholder">Waiting for a video…</div>
       <video id="video" preload="auto" playsinline></video>
+      <iframe id="driveFrame" class="hidden" width="100%" height="100%" style="border:0" allow="autoplay" allowfullscreen></iframe>
     </div>
     <div class="controls">
       <button id="playBtn" disabled>▶ Play</button>
       <button id="restartBtn" disabled>↺ Restart</button>
+      <button class="ghost hidden" id="countdownBtn">⏱ Countdown start</button>
     </div>
+    <p class="hint hidden" id="syncHint" style="text-align:center">Google Drive blocks direct synced playback — press play in the player,
+      then everyone hits the countdown and presses play together. Chat keeps you in step.</p>
   </section>
 
   <!-- Chat -->
@@ -239,11 +243,14 @@
     if (/drive\.google\.com/.test(link)) {
       var id = driveIdFrom(link);
       if (!id) return null;
-      // Direct usercontent URL + confirm=t: skips the virus-scan interstitial and
-      // serves the file with range support (206) so <video> can stream it.
-      return 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(id) + '&export=download&confirm=t';
+      // Google blocks direct <video> streaming cross-origin (Sec-Fetch hotlink
+      // protection) — the official preview embed is the reliable way to play.
+      return 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview';
     }
     return link;
+  }
+  function isDrivePreview(url) {
+    return /drive\.google\.com\/file\/d\//.test(url);
   }
 
   // ---------- PeerJS ----------
@@ -341,13 +348,20 @@
   // ---------- video ----------
   function setVideo(url) {
     videoUrl = url;
-    video.src = url;
-    video.load();
+    var drive = isDrivePreview(url);
+    $('driveFrame').src = drive ? url : '';
+    $('driveFrame').classList.toggle('hidden', !drive);
+    $('video').classList.toggle('hidden', drive);
     $('stagePlaceholder').classList.add('hidden');
-    $('playBtn').disabled = false;
-    $('restartBtn').disabled = false;
+    $('playBtn').disabled = drive;
+    $('restartBtn').disabled = drive;
+    $('syncHint').classList.toggle('hidden', !drive);
+    if (!drive) {
+      video.src = url;
+      video.load();
+    }
     if (isHost && conns.length) broadcast({ t: 'video', url: url });
-    toast('Video loaded' + (isHost ? ' — shared with the room.' : ''));
+    toast(drive ? 'Video ready — press play in the player, then hit the countdown for everyone else.' : 'Video loaded' + (isHost ? ' — shared with the room.' : ''));
   }
   function showStage() {
     $('roomPanel').classList.remove('hidden');
@@ -408,6 +422,22 @@
   $('createRoom').addEventListener('click', makeRoom);
   $('joinRoom').addEventListener('click', function () { joinRoom($('roomCode').value); });
   $('playBtn').addEventListener('click', togglePlay);
+  $('countdownBtn').addEventListener('click', function () {
+    var btn = $('countdownBtn');
+    var n = 3;
+    btn.textContent = '⏱ ' + n;
+    var iv = setInterval(function () {
+      n--;
+      if (n <= 0) {
+        clearInterval(iv);
+        btn.textContent = '⏱ Countdown start';
+        appendChat('sys', '▶ GO — press play!');
+        broadcast({ t: 'chat', m: '▶ GO — press play!' });
+      } else {
+        btn.textContent = '⏱ ' + n;
+      }
+    }, 1000);
+  });
   $('restartBtn').addEventListener('click', function () {
     if (!videoUrl) return;
     try { video.currentTime = 0; video.play(); } catch (e) {}
