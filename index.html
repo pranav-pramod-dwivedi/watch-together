@@ -153,13 +153,15 @@
       <button id="loadUrl">Load</button>
     </div>
     <p class="hint">
-      <strong>How upload works:</strong> the only free, card-free service that streams 1–3 GB video
-      from India is Google Drive (every anonymous host is geo-blocked, capped at ~100–500 MB, or
-      killed direct links — I tested them all). So <strong>Upload movie</strong> opens Drive in a new tab:
-      drop the file there → <em>Share</em> → <em>Anyone with the link → Viewer</em> → back here,
-      hit <strong>Paste from clipboard</strong>. That's it — the room does the rest.
+      <strong>Best: Mediafire (free, no card, plays on mobile).</strong> Upload at
+      <a href="https://www.mediafire.com" target="_blank" rel="noopener">mediafire.com</a> (create a free
+      account with any email — no card). After upload: open the file → press <em>Download</em> →
+      right-press / long-press the button → <em>Copy link</em>. That gives the
+      <code>download.mediafire.com/…</code> direct link — paste it here and everyone gets
+      <strong>true synced playback</strong> (play/pause/restart follow for everyone).
     </p>
-    <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> works too.</p>
+    <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> works too.
+      Google Drive links still work (opens Google's player — desktop-friendly, manual countdown sync).</p>
   </section>
 
   <!-- Step 2: room (always visible) -->
@@ -459,8 +461,8 @@
 
   // ---------- UI wiring ----------
   $('uploadBtn').addEventListener('click', function () {
-    window.open('https://drive.google.com/drive/u/0/my-drive', '_blank', 'noopener');
-    toast('Drive opened — drop the file, Share → Anyone with the link → Viewer, then come back and hit Paste.');
+    window.open('https://www.mediafire.com', '_blank', 'noopener');
+    toast('Upload on Mediafire, open the file, press Download → Copy link — then hit Paste here.');
   });
   $('pasteBtn').addEventListener('click', async function () {
     try {
@@ -515,6 +517,14 @@
   });
   video.addEventListener('play', syncButton);
   video.addEventListener('pause', syncButton);
+  video.addEventListener('error', function () {
+    if (!videoUrl || isDrivePreview(videoUrl)) return;
+    if (/mediafire\.com/.test(videoUrl) && !/download\.mediafire\.com/.test(videoUrl)) {
+      toast('That\'s the Mediafire file page, not the stream link. Open the file → Download → copy the download.mediafire.com link.');
+    } else {
+      toast('That link didn\'t stream — use a direct file URL (download.mediafire.com/… or any .mp4 URL).');
+    }
+  });
   $('chatSend').addEventListener('click', sendChat);
   $('chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChat(); });
   function sendChat() {
