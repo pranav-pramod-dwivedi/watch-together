@@ -239,7 +239,9 @@
     if (/drive\.google\.com/.test(link)) {
       var id = driveIdFrom(link);
       if (!id) return null;
-      return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
+      // Direct usercontent URL + confirm=t: skips the virus-scan interstitial and
+      // serves the file with range support (206) so <video> can stream it.
+      return 'https://drive.usercontent.google.com/download?id=' + encodeURIComponent(id) + '&export=download&confirm=t';
     }
     return link;
   }
