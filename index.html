@@ -144,15 +144,20 @@
   <!-- Step 1: video source -->
   <section class="panel" id="sourcePanel">
     <h2>1 · Video</h2>
+    <div class="row" style="margin-bottom:0.8rem">
+      <button id="uploadBtn">📤 Upload movie</button>
+      <button class="ghost" id="pasteBtn">📋 Paste link from clipboard</button>
+    </div>
     <div class="row">
-      <input type="url" id="videoUrl" placeholder="Paste a Google Drive link or any direct video URL…" />
+      <input type="url" id="videoUrl" placeholder="…or paste a Google Drive link / direct video URL manually" />
       <button id="loadUrl">Load</button>
     </div>
     <p class="hint">
-      <strong>Google Drive (1–3 GB, free, no card):</strong> upload the file to Drive →
-      right-click → <em>Share</em> → <em>General access: Anyone with the link → Viewer</em> →
-      copy the link and paste it here. The link is the only credential — keep it private,
-      delete the Drive file when you're done watching.
+      <strong>How upload works:</strong> the only free, card-free service that streams 1–3 GB video
+      from India is Google Drive (every anonymous host is geo-blocked, capped at ~100–500 MB, or
+      killed direct links — I tested them all). So <strong>Upload movie</strong> opens Drive in a new tab:
+      drop the file there → <em>Share</em> → <em>Anyone with the link → Viewer</em> → back here,
+      hit <strong>Paste from clipboard</strong>. That's it — the room does the rest.
     </p>
     <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> works too.</p>
   </section>
@@ -376,6 +381,21 @@
   }
 
   // ---------- UI wiring ----------
+  $('uploadBtn').addEventListener('click', function () {
+    window.open('https://drive.google.com/drive/u/0/my-drive', '_blank', 'noopener');
+    toast('Drive opened — drop the file, Share → Anyone with the link → Viewer, then come back and hit Paste.');
+  });
+  $('pasteBtn').addEventListener('click', async function () {
+    try {
+      var text = await navigator.clipboard.readText();
+      var url = toStreamUrl(text);
+      if (!url) return toast('Clipboard has no Google Drive link. Copy the Drive share link first.');
+      setVideo(url);
+      $('videoUrl').value = text.trim();
+    } catch (e) {
+      toast('Clipboard blocked by the browser — paste the link manually below.');
+    }
+  });
   $('loadUrl').addEventListener('click', function () {
     var raw = $('videoUrl').value.trim();
     if (!raw) return toast('Paste a Google Drive link or direct video URL first.');
