@@ -170,7 +170,7 @@
       <input type="text" id="roomCode" placeholder="…or enter a room code to join" />
       <button class="ghost" id="joinRoom">Join</button>
     </div>
-    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode"></code> — send this link. Late joiners auto-sync.</p>
+    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode"></code> — tap to copy</p>
   </section>
 
   <!-- Stage -->
@@ -334,6 +334,7 @@
       setStatus('hosting room ' + id + ' — keep this tab open', true);
       $('inviteLine').classList.remove('hidden');
       $('inviteCode').textContent = location.origin + location.pathname + '?room=' + id;
+      updateInvite();
       showStage();
       toast('Room created — send the invite link. Keep this tab open!');
     });
@@ -374,6 +375,10 @@
         // host not ready yet — retry
       }
     });
+    peer.on('disconnected', function () {
+      toast('Connection dropped — retrying…');
+      try { peer.reconnect(); } catch (e) {}
+    });
     function tryConnect() {
       if (connected || attempts >= 12) {
         if (!connected) toast('Couldn\'t reach the room. Make sure the host\'s tab is open, then try again.');
@@ -392,9 +397,17 @@
     }
   }
 
+  function updateInvite() {
+    if (!roomCode) return;
+    var link = location.origin + location.pathname + '?room=' + roomCode;
+    if (videoUrl) link += '&v=' + encodeURIComponent(videoUrl);
+    $('inviteCode').textContent = link;
+  }
+
   // ---------- video ----------
   function setVideo(url) {
     videoUrl = url;
+    updateInvite();
     var drive = isDrivePreview(url);
     $('driveFrame').src = drive ? url : '';
     $('driveFrame').classList.toggle('hidden', !drive);
@@ -408,9 +421,10 @@
       video.load();
     }
     if (isHost && conns.length) broadcast({ t: 'video', url: url });
-    toast(drive ? 'Video ready — press play in the player, then hit the countdown for everyone else.' : 'Video loaded' + (isHost ? ' — shared with the room.' : ''));
+    toast(drive
+      ? (roomCode ? 'Video ready — press play in the player, then hit the countdown for everyone else.' : 'Video ready — press play to check, then hit ＋ Create room and send the invite.')
+      : 'Video loaded' + (isHost ? ' — shared with the room.' : ''));
     showStage();
-    if (!roomCode) toast('Now hit ＋ Create room and send the invite link to your friends.');
   }
   function showStage() {
     $('stagePanel').classList.remove('hidden');
@@ -467,6 +481,14 @@
     setVideo(url);
   });
   $('createRoom').addEventListener('click', makeRoom);
+  $('inviteCode').addEventListener('click', function () {
+    var link = $('inviteCode').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(function () { toast('Invite link copied!'); }, function () { toast(link); });
+    } else {
+      toast(link);
+    }
+  });
   $('joinRoom').addEventListener('click', function () { joinRoom($('roomCode').value); });
   $('playBtn').addEventListener('click', togglePlay);
   $('countdownBtn').addEventListener('click', function () {
@@ -514,11 +536,23 @@
     $('status').className = 'status' + (online ? ' online' : '');
   }
 
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && peer) {
+      // tab came back to foreground — if the peer dropped, bring it back
+      if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} }
+    }
+  });
+
   var q = new URLSearchParams(location.search);
   var autoRoom = q.get('room');
+  var autoVideo = q.get('v');
   if (autoRoom) {
     $('roomPanel').classList.remove('hidden');
     joinRoom(autoRoom);
+  }
+  if (autoVideo) {
+    // load the shared video (a drive preview URL or direct URL)
+    try { setVideo(autoVideo); } catch (e) {}
   }
 })();
 </script>
