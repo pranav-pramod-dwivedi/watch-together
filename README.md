@@ -1,52 +1,66 @@
-# watch-together
+<p align="center">
+  <img src="assets/cover.svg" width="830" alt="watch-together cover" />
+</p>
 
-Free, private, **temporary** watch party for friends who live far apart. No accounts,
-no servers, nothing stored. Your video streams from **your own Google Drive**; the
-room syncs play/pause over **peer-to-peer** (PeerJS). Built as a single static page.
+<h1 align="center">watch-together 🍿</h1>
 
-## What it does
+<p align="center">
+  <b>private · synced watch parties</b> for friends who live far apart.
+  <br/>No accounts. No servers. Nothing stored. Just a link.
+</p>
 
-- Paste a Google Drive link or any direct `.mp4` / `.webm` / `.mkv` video URL.
-- **Create room** → share the invite link (it carries the room code).
-- Friends open the link → auto-join → **Play / Pause / Restart** stays in sync for everyone.
-- Chat included. Nothing is stored anywhere.
+<p align="center">
+  <img src="https://img.shields.io/badge/stack-HTML%20%2B%20JS%20%2B%20PeerJS-4f8cff" alt="stack" />
+  <img src="https://img.shields.io/badge/host-GitHub%20Pages-24292e" alt="host" />
+  <img src="https://img.shields.io/badge/video-Google%20Drive-35c47f" alt="video" />
+</p>
 
-**Important for Google Drive links:** 1–3 GB files may not stream directly in a
-browser because Google returns a *download* page instead of a playable file. If the
-video fails to load, the app shows a hint. In that case use a direct `.mp4` URL
-(any host that streams) instead.
+---
 
-## How to use
+You load the movie from **your own Google Drive**, create a room, and send your friends
+one link. Everyone joins, hits **play**… and it stays in sync. Play/pause/restart for one =
+play/pause/restart for all. Chat included. It's a watch party, minus the travel. ✈️
 
-1. **Upload** the movie to Google Drive (Drive → New → File upload), free up to 15 GB.
-2. Right-click the file → **Share** → **General access: Anyone with the link → Viewer** → copy link.
-3. Open the app → paste the Drive link → **Load**.
-4. **Create room** → copy the invite link → send to your friends.
-5. Friends open the link → auto-join → anyone can play/pause, everyone follows. Chat included.
-6. Done? **Delete the Drive file** — that's the only cleanup.
+## 🚀 Live
 
-## Run it
+> 🔗 **https://pranav-pramod-dwivedi.github.io/watch-together/**
 
-### Option A — GitHub Pages (recommended, free)
+Open it, click **create room**, share the invite link — done.
 
-1. Push this repo to GitHub.
-2. Go to **Settings → Pages** → Source: **Deploy from a branch**, branch `main`, folder `/` → Save.
-3. Your app is live at `https://<user>.github.io/watch-together/`.
-4. The invite links auto-point to wherever the page is hosted — just send them as-is.
+## ✨ What it feels like
 
-### Option B — local server
+- **Paste a link** → Drive link or any direct `.mp4` / `.webm` / `.mkv` URL.
+- **Create room** → a 5-letter code + invite link, all in one tap.
+- **Friends join** → late joiners auto-sync to right where you are.
+- **Controls** → play / pause / restart. That's it. No annoying seek bar fights. 😌
+- **Chat** → jabber away while the movie plays.
+- **Space bar** toggles play / pause.
 
+## ▶️ Quick start
+
+### Option A — your own GitHub Pages (that's the live link above)
 ```bash
-python3 -m http.server 8000   # from this folder → http://localhost:8000
+git clone git@github.com:pranav-pramod-dwivedi/watch-together.git
+cd watch-together
+python3 -m http.server 8000     # → http://localhost:8000
+```
+Then turn on **Settings → Pages → Deploy from branch → `master` / `/`**.
+
+### Option B — totally local (test with friends on the same Wi-Fi)
+```bash
+python3 -m http.server 8000     # share your LAN IP + :8000
 ```
 
-Then open `http://localhost:8000` (share your LAN IP so friends on the same network
-can join the room).
+## ⚠️ Google Drive gotcha
+1–3 GB Drive files sometimes hand back a *download page* instead of a playable video
+(Drive's 100 MB streaming limit). If it won't play, the app shows a little hint — just
+drop in a direct `.mp4` URL instead and you're golden.
 
-## Notes
+## 🔐 The nitty-gritty
+- **The Drive link is the only credential** — it's your file, your rules. Delete it when you're done.
+- Sync rides on PeerJS's free public broker (`0.peerjs.com`). If that broker ever naps, rooms wait until it wakes up.
+- Nothing is stored on any server. Ever. That's the whole point.
 
-- No seek bar by design — **Play / Pause / Restart** only.
-- Sync runs through PeerJS's free public broker (`0.peerjs.com`). If it's ever down,
-  rooms won't connect until it's back.
-- Space bar toggles play/pause.
-- The Drive link is the only credential — keep it private and delete it when done.
+---
+
+<p align="center">made with ❤️ &amp; way too much free time · rewā, india</p>

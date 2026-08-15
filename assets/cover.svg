@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-label="watch-together — private synced watch parties">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e1116"/>
+      <stop offset="1" stop-color="#171c24"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f8cff"/>
+      <stop offset="1" stop-color="#35c47f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  <circle cx="1010" cy="120" r="66" fill="url(#acc)" opacity="0.18"/>
+  <path d="M84 96h352" stroke="#262d38" stroke-width="2"/>
+  <text x="84" y="70" font-family="ui-sans-serif, -apple-system, sans-serif" font-size="34" font-weight="600" fill="#e6e9ee">watch</text>
+  <text x="180" y="70" font-family="ui-sans-serif, -apple-system, sans-serif" font-size="34" font-weight="700" fill="#4f8cff">-together</text>
+  <text x="88" y="150" font-family="ui-sans-serif, -apple-system, sans-serif" font-size="22" fill="#8b95a3">private · synced watch parties for friends</text>
+  <text x="88" y="186" font-family="ui-sans-serif, -apple-system, sans-serif" font-size="22" fill="#8b95a3">who live far apart.</text>
+  <text x="88" y="236" font-family="ui-sans-serif, -apple-system, sans-serif" font-size="16" fill="#4f8cff">no accounts · no servers · nothing stored</text>
+  <g transform="translate(1010,120)">
+    <circle r="50" fill="none" stroke="#4f8cff" stroke-width="4"/>
+    <path d="M -16 24 L 24 0 L -16 -24 Z" fill="#e6e9ee"/>
+  </g>
+</svg>
