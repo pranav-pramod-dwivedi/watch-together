@@ -2,65 +2,54 @@
   <img src="assets/cover.svg" width="830" alt="watch-together cover" />
 </p>
 
-<h1 align="center">watch-together 🍿</h1>
+<h1 align="center">watch-together</h1>
 
 <p align="center">
-  <b>private · synced watch parties</b> for friends who live far apart.
-  <br/>No accounts. No servers. Nothing stored. Just a link.
+  Watch the same movie with a friend who lives too far away for a couch.<br/>
+  No accounts, no servers, nothing stored. Just a link you'll misplace.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/stack-HTML%20%2B%20JS%20%2B%20PeerJS-4f8cff" alt="stack" />
   <img src="https://img.shields.io/badge/host-GitHub%20Pages-24292e" alt="host" />
-  <img src="https://img.shields.io/badge/video-Google%20Drive-35c47f" alt="video" />
 </p>
 
----
+Video sits on **your Google Drive**. You hit create room, send one link, and when
+anyone presses play, pause or restart, everyone else gets dragged along with them.
+There's also a chat box, for the "*did you catch that*" moments.
 
-You load the movie from **your own Google Drive**, create a room, and send your friends
-one link. Everyone joins, hits **play**… and it stays in sync. Play/pause/restart for one =
-play/pause/restart for all. Chat included. It's a watch party, minus the travel. ✈️
+## Try it live
 
-## 🚀 Live
+https://pranav-pramod-dwivedi.github.io/watch-together/
 
-> 🔗 **https://pranav-pramod-dwivedi.github.io/watch-together/**
+Open it, create room, send the invite. Finding a friend is on you.
 
-Open it, click **create room**, share the invite link — done.
+## What you can do
 
-## ✨ What it feels like
+- Paste a Drive link, or any video URL ending in `.mp4`, `.webm` or `.mkv`.
+- Create room gives you a 5-letter code and an invite link with the code already in it.
+- Friends join and auto-sync to wherever you are in the movie.
+- Only play, pause and restart. No seek bar, so nobody can jump ahead and spoil it.
+- Space bar plays / pauses. Chat's there if you want it.
 
-- **Paste a link** → Drive link or any direct `.mp4` / `.webm` / `.mkv` URL.
-- **Create room** → a 5-letter code + invite link, all in one tap.
-- **Friends join** → late joiners auto-sync to right where you are.
-- **Controls** → play / pause / restart. That's it. No annoying seek bar fights. 😌
-- **Chat** → jabber away while the movie plays.
-- **Space bar** toggles play / pause.
+## Run it yourself
 
-## ▶️ Quick start
-
-### Option A — your own GitHub Pages (that's the live link above)
 ```bash
-git clone git@github.com:pranav-pramod-dwivedi/watch-together.git
-cd watch-together
-python3 -m http.server 8000     # → http://localhost:8000
-```
-Then turn on **Settings → Pages → Deploy from branch → `master` / `/`**.
-
-### Option B — totally local (test with friends on the same Wi-Fi)
-```bash
-python3 -m http.server 8000     # share your LAN IP + :8000
+python3 -m http.server 8000   # from this folder → http://localhost:8000
 ```
 
-## ⚠️ Google Drive gotcha
-1–3 GB Drive files sometimes hand back a *download page* instead of a playable video
-(Drive's 100 MB streaming limit). If it won't play, the app shows a little hint — just
-drop in a direct `.mp4` URL instead and you're golden.
+Permanent home is just enabling **Settings → Pages → branch `master`, folder `/`**.
 
-## 🔐 The nitty-gritty
-- **The Drive link is the only credential** — it's your file, your rules. Delete it when you're done.
-- Sync rides on PeerJS's free public broker (`0.peerjs.com`). If that broker ever naps, rooms wait until it wakes up.
-- Nothing is stored on any server. Ever. That's the whole point.
+## The Google Drive catch
 
----
+Small files stream fine. Once they're bigger (roughly 100 MB+) Drive starts handing the
+browser a download page instead of a watchable video, and the app will tell you it
+broke. At that point just use a direct `.mp4` link and carry on.
 
-<p align="center">made with ❤️ &amp; way too much free time · rewā, india</p>
+## Fine print
+
+- Sync goes through PeerJS's free public broker. If that goes down, rooms go down with it.
+- The Drive link is the only credential. Keep it private. Delete the file when you're done.
+- Nothing is stored anywhere, mostly because there's no server to store it on.
+
+<p align="center">the movie might be bad, but at least you suffer together</p>
