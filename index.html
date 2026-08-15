@@ -394,6 +394,9 @@
   });
   video.addEventListener('play', syncButton);
   video.addEventListener('pause', syncButton);
+  video.addEventListener('error', function () {
+    toast('Video failed to load. For Google Drive links, keep share access "Anyone with the link" and try a direct .mp4/.webm URL instead.');
+  });
   $('chatSend').addEventListener('click', sendChat);
   $('chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChat(); });
   function sendChat() {
