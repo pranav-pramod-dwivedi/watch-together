@@ -418,15 +418,32 @@
     $('muteBtn').textContent = video.muted ? '🔇 Unmute' : '🔊 Mute';
   }
 
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+  }
+
+  function syncFullscreenBtn() {
+    $('fullscreenBtn').textContent = isFullscreen() ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+  }
+
   function toggleFullscreen() {
     var elem = $('stage');
-    if (!document.fullscreenElement) {
+    if (!isFullscreen()) {
       if (elem.requestFullscreen) elem.requestFullscreen();
       else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     } else {
       if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
     }
   }
+
+  document.addEventListener('fullscreenchange', syncFullscreenBtn);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenBtn);
+  document.addEventListener('mozfullscreenchange', syncFullscreenBtn);
 
   var CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function randCode() {
@@ -519,6 +536,12 @@
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       video.currentTime = Math.max(0, video.currentTime - 5);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      video.volume = Math.min(1, video.volume + 0.05);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      video.volume = Math.max(0, video.volume - 0.05);
     }
   });
   function setStatus(text, online) {
