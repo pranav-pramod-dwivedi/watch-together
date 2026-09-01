@@ -245,17 +245,36 @@
     conns.forEach(function (c) { if (c.open) c.send(payload); });
   }
   function handleMsg(data) {
-    var m = typeof data === 'string' ? JSON.parse(data) : data;
+    var m;
+    try {
+      m = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      return;
+    }
+    if (!m || !m.t) return;
+
     switch (m.t) {
       case 'video':
-        if (!videoUrl) setVideo(m.url);
+        if (!videoUrl || videoUrl !== m.url) setVideo(m.url);
         break;
       case 'play':
+        if (typeof m.time === 'number' && Math.abs(video.currentTime - m.time) > 1.5) {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
         try { video.play(); } catch (e) {}
         syncButton();
         break;
       case 'pause':
+        if (typeof m.time === 'number' && Math.abs(video.currentTime - m.time) > 0.5) {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
         try { video.pause(); } catch (e) {}
+        syncButton();
+        break;
+      case 'seek':
+        if (typeof m.time === 'number') {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
         syncButton();
         break;
       case 'restart':
@@ -266,8 +285,15 @@
         appendChat('them', m.m);
         break;
       case 'sync':
-        if (m.url && !videoUrl) setVideo(m.url);
-        if (m.playing) { try { video.currentTime = 0; video.play(); } catch (e) {} }
+        if (m.url && (!videoUrl || videoUrl !== m.url)) setVideo(m.url);
+        if (typeof m.time === 'number') {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
+        if (m.playing) {
+          try { video.play(); } catch (e) {}
+        } else {
+          try { video.pause(); } catch (e) {}
+        }
         syncButton();
         break;
     }
@@ -277,7 +303,12 @@
       conns.push(c);
       setStatus('connected to room ' + roomCode, true);
       if (isHost) {
-        c.send(JSON.stringify({ t: 'sync', url: videoUrl, playing: !video.paused && video.currentTime > 0 }));
+        c.send(JSON.stringify({
+          t: 'sync',
+          url: videoUrl,
+          playing: !video.paused && video.currentTime > 0,
+          time: video.currentTime || 0
+        }));
         appendChat('sys', 'Someone joined the room.');
       }
       onOpen && onOpen();
@@ -352,9 +383,13 @@
   }
   function togglePlay() {
     if (!videoUrl) return;
-    var msg = video.paused ? 'play' : 'pause';
-    if (video.paused) video.play(); else video.pause();
-    broadcast({ t: msg });
+    var willPlay = video.paused;
+    if (willPlay) {
+      video.play().catch(function () {});
+    } else {
+      video.pause();
+    }
+    broadcast({ t: willPlay ? 'play' : 'pause', time: video.currentTime });
     syncButton();
   }
 
@@ -383,8 +418,25 @@
     if (!url) return toast("Couldn't read that link — use a Drive share link (file/d/…/view) or a direct .mp4 URL.");
     setVideo(url);
   });
+  $('videoUrl').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('loadUrl').click();
+  });
   $('createRoom').addEventListener('click', makeRoom);
   $('joinRoom').addEventListener('click', function () { joinRoom($('roomCode').value); });
+  $('roomCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('joinRoom').click();
+  });
+  $('inviteCode').addEventListener('click', function () {
+    var url = this.textContent;
+    if (!url) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        toast('Invite link copied to clipboard!');
+      }).catch(function () {
+        toast('Invite link ready to share');
+      });
+    }
+  });
   $('playBtn').addEventListener('click', togglePlay);
   $('restartBtn').addEventListener('click', function () {
     if (!videoUrl) return;
@@ -394,6 +446,11 @@
   });
   video.addEventListener('play', syncButton);
   video.addEventListener('pause', syncButton);
+  video.addEventListener('seeked', function () {
+    if (isHost && conns.length) {
+      broadcast({ t: 'seek', time: video.currentTime });
+    }
+  });
   video.addEventListener('error', function () {
     toast('Video failed to load. For Google Drive links, keep share access "Anyone with the link" and try a direct .mp4/.webm URL instead.');
   });
