@@ -224,23 +224,31 @@
   var roomCode = null;
   var videoUrl = null;
 
-  // ---------- Google Drive link → streamable URL ----------
+  // ---------- Streamable URL Converters (Drive, Dropbox, Direct) ----------
   function driveIdFrom(link) {
     var m;
-    m = link.match(/\/file\/d\/([^/?#]+)/);
+    m = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
-    m = link.match(/[?&]id=([^&#]+)/);
+    m = link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
-    m = link.match(/\/open\?id=([^&#]+)/);
+    m = link.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    m = link.match(/\/uc\?id=([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
     return null;
   }
   function toStreamUrl(link) {
-    link = link.trim();
+    link = (link || '').trim();
+    if (!link) return null;
     if (/drive\.google\.com/.test(link)) {
       var id = driveIdFrom(link);
       if (!id) return null;
       return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
+    }
+    if (/dropbox\.com/.test(link)) {
+      if (link.includes('?dl=0')) return link.replace('?dl=0', '?raw=1');
+      if (link.includes('&dl=0')) return link.replace('&dl=0', '&raw=1');
+      return link.includes('?') ? link + '&raw=1' : link + '?raw=1';
     }
     return link;
   }
@@ -478,6 +486,18 @@
   $('roomCode').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') $('joinRoom').click();
   });
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
   $('inviteCode').addEventListener('click', function () {
     var url = this.textContent;
     if (!url) return;
@@ -485,8 +505,12 @@
       navigator.clipboard.writeText(url).then(function () {
         toast('Invite link copied to clipboard!');
       }).catch(function () {
-        toast('Invite link ready to share');
+        fallbackCopy(url);
+        toast('Invite link copied to clipboard!');
       });
+    } else {
+      fallbackCopy(url);
+      toast('Invite link copied to clipboard!');
     }
   });
   $('playBtn').addEventListener('click', togglePlay);
