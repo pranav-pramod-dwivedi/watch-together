@@ -178,10 +178,10 @@
       <video id="video" preload="auto" playsinline></video>
     </div>
     <div class="controls">
-      <button id="playBtn" disabled>▶ Play</button>
-      <button class="ghost" id="restartBtn" disabled>↺ Restart</button>
-      <button class="ghost" id="muteBtn" disabled>🔊 Mute</button>
-      <button class="ghost" id="fullscreenBtn" disabled>⛶ Fullscreen</button>
+      <button id="playBtn" disabled aria-label="Play or pause video">▶ Play</button>
+      <button class="ghost" id="restartBtn" disabled aria-label="Restart video">↺ Restart</button>
+      <button class="ghost" id="muteBtn" disabled aria-label="Toggle mute">🔊 Mute</button>
+      <button class="ghost" id="fullscreenBtn" disabled aria-label="Toggle fullscreen">⛶ Fullscreen</button>
       <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
     </div>
   </section>
@@ -567,10 +567,10 @@
       video.currentTime = Math.max(0, video.currentTime - 5);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      video.volume = Math.min(1, video.volume + 0.05);
+      video.volume = Math.min(1, Math.round((video.volume + 0.05) * 100) / 100);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      video.volume = Math.max(0, video.volume - 0.05);
+      video.volume = Math.max(0, Math.round((video.volume - 0.05) * 100) / 100);
     }
   });
   function setStatus(text, online) {
@@ -579,8 +579,9 @@
   }
 
   var q = new URLSearchParams(location.search);
-  var autoRoom = q.get('room');
+  var autoRoom = (q.get('room') || q.get('r') || '').trim().toUpperCase();
   if (autoRoom) {
+    $('roomCode').value = autoRoom;
     $('roomPanel').classList.remove('hidden');
     joinRoom(autoRoom);
   }
