@@ -238,7 +238,7 @@
     return null;
   }
   function toStreamUrl(link) {
-    link = (link || '').trim();
+    link = (link || '').trim().replace(/^["']|["']$/g, '');
     if (!link) return null;
     if (/drive\.google\.com/.test(link)) {
       var id = driveIdFrom(link);
@@ -249,6 +249,9 @@
       if (link.includes('?dl=0')) return link.replace('?dl=0', '?raw=1');
       if (link.includes('&dl=0')) return link.replace('&dl=0', '&raw=1');
       return link.includes('?') ? link + '&raw=1' : link + '?raw=1';
+    }
+    if (/github\.com\/[^/]+\/[^/]+\/blob\//.test(link)) {
+      return link.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
     }
     return link;
   }
@@ -394,6 +397,8 @@
     video.src = url;
     video.load();
     $('stagePlaceholder').classList.add('hidden');
+    $('roomPanel').classList.remove('hidden');
+    $('stagePanel').classList.remove('hidden');
     $('playBtn').disabled = false;
     $('restartBtn').disabled = false;
     $('muteBtn').disabled = false;
@@ -546,7 +551,7 @@
     inp.value = '';
   }
   document.addEventListener('keydown', function (e) {
-    if (e.target.tagName === 'INPUT' || !videoUrl) return;
+    if ((e.target && e.target.matches && e.target.matches('input, textarea, select, [contenteditable="true"]')) || !videoUrl) return;
     if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();
