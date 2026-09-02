@@ -189,7 +189,7 @@
   <!-- Chat -->
   <section class="panel hidden" id="chatPanel">
     <h2>Chat</h2>
-    <div class="chatlog" id="chatlog"></div>
+    <div class="chatlog" id="chatlog" role="log" aria-live="polite"></div>
     <div class="row">
       <input type="text" id="chatInput" placeholder="Say something…" aria-label="Chat input" />
       <button id="chatSend">Send</button>
@@ -261,7 +261,7 @@
     var payload = JSON.stringify(msg);
     conns.forEach(function (c) { if (c.open) c.send(payload); });
   }
-  function handleMsg(data) {
+  function handleMsg(data, c) {
     var m;
     try {
       m = typeof data === 'string' ? JSON.parse(data) : data;
@@ -269,6 +269,13 @@
       return;
     }
     if (!m || !m.t) return;
+
+    if (isHost && c) {
+      var raw = typeof data === 'string' ? data : JSON.stringify(data);
+      conns.forEach(function (conn) {
+        if (conn !== c && conn.open) conn.send(raw);
+      });
+    }
 
     switch (m.t) {
       case 'video':
@@ -330,7 +337,7 @@
       }
       onOpen && onOpen();
     });
-    c.on('data', handleMsg);
+    c.on('data', function (data) { handleMsg(data, c); });
     c.on('close', function () {
       conns = conns.filter(function (x) { return x !== c; });
       if (isHost) appendChat('sys', 'Someone left the room.');
