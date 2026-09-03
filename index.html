@@ -3,8 +3,21 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0e1116" />
 <title>watch-together — private synced viewing</title>
 <meta name="description" content="Free, temporary, card-free watch party: share a Google Drive link, friends watch in sync. No accounts, no servers, nothing stored." />
+
+    <!-- Open Graph / social link preview (WhatsApp, Discord, Slack, iMessage, etc.) -->
+    <meta property="og:title" content="watch-together — private synced viewing" />
+    <meta property="og:description" content="Free, temporary, card-free watch party: share a Google Drive link, friends watch in sync. No accounts, no servers, nothing stored." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pranav-pramod-dwivedi.github.io/watch-together/" />
+    <meta property="og:image" content="https://pranav-pramod-dwivedi.github.io/watch-together/assets/cover.svg" />
+    <meta property="og:site_name" content="watch-together" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="watch-together — private synced viewing" />
+    <meta name="twitter:description" content="Free, temporary, card-free watch party: share a Google Drive link, friends watch in sync. No accounts, no servers, nothing stored." />
+    <meta name="twitter:image" content="https://pranav-pramod-dwivedi.github.io/watch-together/assets/cover.svg" />
 <style>
   :root {
     --bg: #0e1116;
@@ -36,7 +49,7 @@
   }
   header .logo { font-weight: 800; letter-spacing: 0.02em; }
   header .logo span { color: var(--brand); }
-  header .status { color: var(--muted); font-size: 0.85rem; }
+  header .status { color: var(--muted); font-size: 0.85rem; display: flex; align-items: center; }
   header .status .dot {
     display: inline-block; width: 8px; height: 8px; border-radius: 50%;
     background: #555; margin-right: 0.4rem; vertical-align: middle;
@@ -81,6 +94,7 @@
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s, opacity 0.15s;
   }
   button:hover { background: var(--brand-dark); }
   button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
@@ -104,8 +118,9 @@
   }
   .stage video { width: 100%; height: 100%; object-fit: contain; }
   .stage .placeholder { color: var(--muted); text-align: center; padding: 1rem; font-size: 0.95rem; }
-  .controls { display: flex; gap: 0.6rem; justify-content: center; padding: 1rem 0 0; flex-wrap: wrap; }
-  .controls button { min-width: 120px; }
+  .controls { display: flex; gap: 0.6rem; justify-content: center; align-items: center; padding: 1rem 0 0; flex-wrap: wrap; }
+  .controls button { min-width: 100px; }
+  .time-display { font-size: 0.85rem; color: var(--muted); font-family: ui-monospace, Menlo, monospace; padding: 0 0.5rem; }
   .chatlog {
     max-height: 180px;
     overflow-y: auto;
@@ -137,42 +152,35 @@
 
 <header>
   <div class="logo">watch<span>-together</span></div>
-  <div class="status" id="status"><span class="dot"></span><span id="statusText">no room yet — load a video, then create a room</span></div>
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">not connected</span></div>
 </header>
 
 <main>
   <!-- Step 1: video source -->
   <section class="panel" id="sourcePanel">
     <h2>1 · Video</h2>
-    <div class="row" style="margin-bottom:0.8rem">
-      <button id="uploadBtn">📤 Upload movie</button>
-      <button class="ghost" id="pasteBtn">📋 Paste link from clipboard</button>
-    </div>
     <div class="row">
-      <input type="url" id="videoUrl" placeholder="…or paste a Google Drive link / direct video URL manually" />
+      <input type="url" id="videoUrl" placeholder="Paste a Google Drive link or any direct video URL…" aria-label="Video URL" />
       <button id="loadUrl">Load</button>
     </div>
     <p class="hint">
-      <strong>Best: Mediafire (free, no card, plays on mobile).</strong> Upload at
-      <a href="https://www.mediafire.com" target="_blank" rel="noopener">mediafire.com</a> (create a free
-      account with any email — no card). After upload: open the file → press <em>Download</em> →
-      right-press / long-press the button → <em>Copy link</em>. That gives the
-      <code>download.mediafire.com/…</code> direct link — paste it here and everyone gets
-      <strong>true synced playback</strong> (play/pause/restart follow for everyone).
+      <strong>Google Drive (1–3 GB, free, no card):</strong> upload the file to Drive →
+      right-click → <em>Share</em> → <em>General access: Anyone with the link → Viewer</em> →
+      copy the link and paste it here. The link is the only credential — keep it private,
+      delete the Drive file when you're done watching.
     </p>
-    <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> works too.
-      Google Drive links still work (opens Google's player — desktop-friendly, manual countdown sync).</p>
+    <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> works too.</p>
   </section>
 
-  <!-- Step 2: room (always visible) -->
-  <section class="panel" id="roomPanel">
+  <!-- Step 2: room -->
+  <section class="panel hidden" id="roomPanel">
     <h2>2 · Room</h2>
     <div class="row" style="margin-bottom:0.9rem">
       <button id="createRoom">＋ Create room</button>
-      <input type="text" id="roomCode" placeholder="…or enter a room code to join" />
+      <input type="text" id="roomCode" placeholder="…or enter a room code to join" aria-label="Room code" />
       <button class="ghost" id="joinRoom">Join</button>
     </div>
-    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode"></code> — tap to copy</p>
+    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode"></code> — send this link. Late joiners auto-sync.</p>
   </section>
 
   <!-- Stage -->
@@ -180,29 +188,28 @@
     <div class="stage" id="stage">
       <div class="placeholder" id="stagePlaceholder">Waiting for a video…</div>
       <video id="video" preload="auto" playsinline></video>
-      <iframe id="driveFrame" class="hidden" width="100%" height="100%" style="border:0" allow="autoplay" allowfullscreen></iframe>
     </div>
     <div class="controls">
-      <button id="playBtn" disabled>▶ Play</button>
-      <button id="restartBtn" disabled>↺ Restart</button>
-      <button class="ghost hidden" id="countdownBtn">⏱ Countdown start</button>
+      <button id="playBtn" disabled aria-label="Play or pause video">▶ Play</button>
+      <button class="ghost" id="restartBtn" disabled aria-label="Restart video">↺ Restart</button>
+      <button class="ghost" id="muteBtn" disabled aria-label="Toggle mute">🔊 Mute</button>
+      <button class="ghost" id="fullscreenBtn" disabled aria-label="Toggle fullscreen">⛶ Fullscreen</button>
+      <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
     </div>
-    <p class="hint hidden" id="syncHint" style="text-align:center">Google Drive blocks direct synced playback — press play in the player,
-      then everyone hits the countdown and presses play together. Chat keeps you in step.</p>
   </section>
 
   <!-- Chat -->
   <section class="panel hidden" id="chatPanel">
     <h2>Chat</h2>
-    <div class="chatlog" id="chatlog"></div>
+    <div class="chatlog" id="chatlog" role="log" aria-live="polite"></div>
     <div class="row">
-      <input type="text" id="chatInput" placeholder="Say something…" />
+      <input type="text" id="chatInput" placeholder="Say something…" aria-label="Chat input" />
       <button id="chatSend">Send</button>
     </div>
   </section>
 </main>
 
-<footer>Free &amp; temporary — no accounts on this app, no servers, nothing stored. Video streams from your own Google Drive.</footer>
+<footer>Free & temporary — no accounts on this app, no servers, nothing stored. Video streams from your own Google Drive.</footer>
 
 <div class="toast hidden" id="toast"></div>
 
@@ -229,64 +236,81 @@
   var roomCode = null;
   var videoUrl = null;
 
-  // ---------- Google Drive link → streamable URL ----------
+  // ---------- Streamable URL Converters (Drive, Dropbox, Direct) ----------
   function driveIdFrom(link) {
     var m;
-    m = link.match(/\/file\/d\/([^/?#]+)/);
+    m = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
-    m = link.match(/[?&]id=([^&#]+)/);
+    m = link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
-    m = link.match(/\/open\?id=([^&#]+)/);
+    m = link.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    m = link.match(/\/uc\?id=([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
     return null;
   }
   function toStreamUrl(link) {
-    link = link.trim();
+    link = (link || '').trim().replace(/^["']|["']$/g, '');
+    if (!link) return null;
     if (/drive\.google\.com/.test(link)) {
       var id = driveIdFrom(link);
       if (!id) return null;
-      // Google blocks direct <video> streaming cross-origin (Sec-Fetch hotlink
-      // protection) — the official preview embed is the reliable way to play.
-      return 'https://drive.google.com/file/d/' + encodeURIComponent(id) + '/preview';
+      return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
+    }
+    if (/dropbox\.com/.test(link)) {
+      if (link.includes('?dl=0')) return link.replace('?dl=0', '?raw=1');
+      if (link.includes('&dl=0')) return link.replace('&dl=0', '&raw=1');
+      return link.includes('?') ? link + '&raw=1' : link + '?raw=1';
+    }
+    if (/github\.com\/[^/]+\/[^/]+\/blob\//.test(link)) {
+      return link.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
     }
     return link;
   }
-  function isDrivePreview(url) {
-    return /drive\.google\.com\/file\/d\//.test(url);
-  }
 
   // ---------- PeerJS ----------
-  // STUN + free public TURN (TCP fallback for strict mobile NATs — UDP-only
-  // WebRTC fails on many Indian mobile networks without it).
-  var RTC_CONFIG = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:global.stun.twilio.com:3478' },
-      {
-        urls: ['turn:openrelay.metered.ca:80?transport=tcp', 'turn:openrelay.metered.ca:443?transport=tcp'],
-        username: 'openrelayproject',
-        credential: 'openrelayproject',
-      },
-    ],
-  };
-  function newPeer(id) {
-    return new Peer(id, { config: RTC_CONFIG });
-  }  function broadcast(msg) {
+  function broadcast(msg) {
     var payload = JSON.stringify(msg);
     conns.forEach(function (c) { if (c.open) c.send(payload); });
   }
-  function handleMsg(data) {
-    var m = typeof data === 'string' ? JSON.parse(data) : data;
+  function handleMsg(data, c) {
+    var m;
+    try {
+      m = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      return;
+    }
+    if (!m || !m.t) return;
+
+    if (isHost && c) {
+      var raw = typeof data === 'string' ? data : JSON.stringify(data);
+      conns.forEach(function (conn) {
+        if (conn !== c && conn.open) conn.send(raw);
+      });
+    }
+
     switch (m.t) {
       case 'video':
-        if (!videoUrl) setVideo(m.url);
+        if (!videoUrl || videoUrl !== m.url) setVideo(m.url);
         break;
       case 'play':
+        if (typeof m.time === 'number' && Math.abs(video.currentTime - m.time) > 1.5) {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
         try { video.play(); } catch (e) {}
         syncButton();
         break;
       case 'pause':
+        if (typeof m.time === 'number' && Math.abs(video.currentTime - m.time) > 0.5) {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
         try { video.pause(); } catch (e) {}
+        syncButton();
+        break;
+      case 'seek':
+        if (typeof m.time === 'number') {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
         syncButton();
         break;
       case 'restart':
@@ -297,29 +321,35 @@
         appendChat('them', m.m);
         break;
       case 'sync':
-        if (m.url && !videoUrl) setVideo(m.url);
-        if (m.playing) { try { video.currentTime = 0; video.play(); } catch (e) {} }
+        if (m.url && (!videoUrl || videoUrl !== m.url)) setVideo(m.url);
+        if (typeof m.time === 'number') {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
+        if (m.playing) {
+          try { video.play(); } catch (e) {}
+        } else {
+          try { video.pause(); } catch (e) {}
+        }
         syncButton();
         break;
     }
   }
   function wireConn(c, onOpen) {
     c.on('open', function () {
-      // dedupe: if this peer already has a live channel, drop the new one
-      if (conns.some(function (x) { return x !== c && x.peer === c.peer && x.open; })) {
-        try { c.close(); } catch (e) {}
-        return;
-      }
       conns.push(c);
       setStatus('connected to room ' + roomCode, true);
       if (isHost) {
-        c.send(JSON.stringify({ t: 'sync', url: videoUrl, playing: !video.paused && video.currentTime > 0 }));
+        c.send(JSON.stringify({
+          t: 'sync',
+          url: videoUrl,
+          playing: !video.paused && video.currentTime > 0,
+          time: video.currentTime || 0
+        }));
         appendChat('sys', 'Someone joined the room.');
       }
-      $('chatPanel').classList.remove('hidden');
       onOpen && onOpen();
     });
-    c.on('data', handleMsg);
+    c.on('data', function (data) { handleMsg(data, c); });
     c.on('close', function () {
       conns = conns.filter(function (x) { return x !== c; });
       if (isHost) appendChat('sys', 'Someone left the room.');
@@ -331,20 +361,14 @@
   function makeRoom() {
     roomCode = randCode();
     isHost = true;
-    peer = newPeer(roomCode);
+    peer = new Peer(roomCode);
     peer.on('open', function (id) {
-      setStatus('hosting room ' + id + ' — keep this tab open', true);
+      setStatus('hosting room ' + id, true);
       $('inviteLine').classList.remove('hidden');
       $('inviteCode').textContent = location.origin + location.pathname + '?room=' + id;
-      updateInvite();
       showStage();
-      toast('Room created — send the invite link. Keep this tab open!');
     });
     peer.on('connection', function (c) { wireConn(c); });
-    peer.on('disconnected', function () {
-      // phone slept / network blip — try to come back
-      try { peer.reconnect(); } catch (e) {}
-    });
     peer.on('error', function (err) {
       if (err.type === 'unavailable-id') {
         toast('Room code taken — try again.');
@@ -362,85 +386,96 @@
     if (!code) return toast('Enter a room code.');
     roomCode = code;
     isHost = false;
-    peer = newPeer('g-' + Math.random().toString(36).slice(2, 8));
-    var attempts = 0;
-    var connected = false;
-    var pendingConn = null;
+    peer = new Peer('g-' + Math.random().toString(36).slice(2, 8));
     peer.on('open', function () {
       setStatus('joining ' + roomCode + '…', false);
-      tryConnect();
+      var c = peer.connect(code, { reliable: true });
+      wireConn(c, function () { showStage(); });
     });
     peer.on('error', function (err) {
-      if (err.type === 'network' || err.type === 'server-error') {
-        toast('Sync broker unreachable — check internet.');
-      } else if (err.type === 'peer-unavailable' && !connected) {
-        // host not ready yet — retry
-      }
+      if (err.type === 'peer-unavailable') toast('Room not found — check the code.');
+      else if (err.type === 'network' || err.type === 'server-error') toast('Sync broker unreachable — check internet.');
     });
-    peer.on('disconnected', function () {
-      toast('Connection dropped — retrying…');
-      try { peer.reconnect(); } catch (e) {}
-    });
-    function tryConnect() {
-      if (connected || attempts >= 12) {
-        if (!connected) toast('Couldn\'t reach the room. Make sure the host\'s tab is open, then try again.');
-        return;
-      }
-      attempts++;
-      if (pendingConn) { try { pendingConn.close(); } catch (e) {} }
-      pendingConn = peer.connect(code, { reliable: true });
-      wireConn(pendingConn, function () {
-        connected = true;
-        pendingConn = null;
-        showStage();
-        toast('Joined room ' + roomCode + '!');
-      });
-      setTimeout(tryConnect, 2500);
-    }
-  }
-
-  function updateInvite() {
-    if (!roomCode) return;
-    var link = location.origin + location.pathname + '?room=' + roomCode;
-    if (videoUrl) link += '&v=' + encodeURIComponent(videoUrl);
-    $('inviteCode').textContent = link;
   }
 
   // ---------- video ----------
+  function formatTime(sec) {
+    if (isNaN(sec) || !isFinite(sec)) return '0:00';
+    var m = Math.floor(sec / 60);
+    var s = Math.floor(sec % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function updateTimeDisplay() {
+    var cur = video.currentTime || 0;
+    var dur = video.duration || 0;
+    $('timeDisplay').textContent = formatTime(cur) + ' / ' + formatTime(dur);
+  }
+
   function setVideo(url) {
     videoUrl = url;
-    updateInvite();
-    var drive = isDrivePreview(url);
-    $('driveFrame').src = drive ? url : '';
-    $('driveFrame').classList.toggle('hidden', !drive);
-    $('video').classList.toggle('hidden', drive);
+    video.src = url;
+    video.load();
     $('stagePlaceholder').classList.add('hidden');
-    $('playBtn').disabled = drive;
-    $('restartBtn').disabled = drive;
-    $('syncHint').classList.toggle('hidden', !drive);
-    if (!drive) {
-      video.src = url;
-      video.load();
-    }
+    $('roomPanel').classList.remove('hidden');
+    $('stagePanel').classList.remove('hidden');
+    $('playBtn').disabled = false;
+    $('restartBtn').disabled = false;
+    $('muteBtn').disabled = false;
+    $('fullscreenBtn').disabled = false;
     if (isHost && conns.length) broadcast({ t: 'video', url: url });
-    toast(drive
-      ? (roomCode ? 'Video ready — press play in the player, then hit the countdown for everyone else.' : 'Video ready — press play to check, then hit ＋ Create room and send the invite.')
-      : 'Video loaded' + (isHost ? ' — shared with the room.' : ''));
-    showStage();
+    toast('Video loaded' + (isHost ? ' — shared with the room.' : ''));
   }
   function showStage() {
+    $('roomPanel').classList.remove('hidden');
     $('stagePanel').classList.remove('hidden');
+    $('chatPanel').classList.remove('hidden');
   }
   function syncButton() {
     $('playBtn').textContent = video.paused ? '▶ Play' : '❚❚ Pause';
   }
   function togglePlay() {
     if (!videoUrl) return;
-    var msg = video.paused ? 'play' : 'pause';
-    if (video.paused) video.play(); else video.pause();
-    broadcast({ t: msg });
+    var willPlay = video.paused;
+    if (willPlay) {
+      video.play().catch(function () {});
+    } else {
+      video.pause();
+    }
+    broadcast({ t: willPlay ? 'play' : 'pause', time: video.currentTime });
     syncButton();
   }
+
+  function toggleMute() {
+    video.muted = !video.muted;
+    $('muteBtn').textContent = video.muted ? '🔇 Unmute' : '🔊 Mute';
+  }
+
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+  }
+
+  function syncFullscreenBtn() {
+    $('fullscreenBtn').textContent = isFullscreen() ? '⛶ Exit Fullscreen' : '⛶ Fullscreen';
+  }
+
+  function toggleFullscreen() {
+    var elem = $('stage');
+    if (!isFullscreen()) {
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+  }
+
+  document.addEventListener('fullscreenchange', syncFullscreenBtn);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenBtn);
+  document.addEventListener('mozfullscreenchange', syncFullscreenBtn);
 
   var CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function randCode() {
@@ -460,21 +495,6 @@
   }
 
   // ---------- UI wiring ----------
-  $('uploadBtn').addEventListener('click', function () {
-    window.open('https://www.mediafire.com', '_blank', 'noopener');
-    toast('Upload on Mediafire, open the file, press Download → Copy link — then hit Paste here.');
-  });
-  $('pasteBtn').addEventListener('click', async function () {
-    try {
-      var text = await navigator.clipboard.readText();
-      var url = toStreamUrl(text);
-      if (!url) return toast('Clipboard has no Google Drive link. Copy the Drive share link first.');
-      setVideo(url);
-      $('videoUrl').value = text.trim();
-    } catch (e) {
-      toast('Clipboard blocked by the browser — paste the link manually below.');
-    }
-  });
   $('loadUrl').addEventListener('click', function () {
     var raw = $('videoUrl').value.trim();
     if (!raw) return toast('Paste a Google Drive link or direct video URL first.');
@@ -482,48 +502,62 @@
     if (!url) return toast("Couldn't read that link — use a Drive share link (file/d/…/view) or a direct .mp4 URL.");
     setVideo(url);
   });
+  $('videoUrl').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('loadUrl').click();
+  });
   $('createRoom').addEventListener('click', makeRoom);
+  $('joinRoom').addEventListener('click', function () { joinRoom($('roomCode').value); });
+  $('roomCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('joinRoom').click();
+  });
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
   $('inviteCode').addEventListener('click', function () {
-    var link = $('inviteCode').textContent;
+    var url = this.textContent;
+    if (!url) return;
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(link).then(function () { toast('Invite link copied!'); }, function () { toast(link); });
+      navigator.clipboard.writeText(url).then(function () {
+        toast('Invite link copied to clipboard!');
+      }).catch(function () {
+        fallbackCopy(url);
+        toast('Invite link copied to clipboard!');
+      });
     } else {
-      toast(link);
+      fallbackCopy(url);
+      toast('Invite link copied to clipboard!');
     }
   });
-  $('joinRoom').addEventListener('click', function () { joinRoom($('roomCode').value); });
   $('playBtn').addEventListener('click', togglePlay);
-  $('countdownBtn').addEventListener('click', function () {
-    var btn = $('countdownBtn');
-    var n = 3;
-    btn.textContent = '⏱ ' + n;
-    var iv = setInterval(function () {
-      n--;
-      if (n <= 0) {
-        clearInterval(iv);
-        btn.textContent = '⏱ Countdown start';
-        appendChat('sys', '▶ GO — press play!');
-        broadcast({ t: 'chat', m: '▶ GO — press play!' });
-      } else {
-        btn.textContent = '⏱ ' + n;
-      }
-    }, 1000);
-  });
   $('restartBtn').addEventListener('click', function () {
     if (!videoUrl) return;
     try { video.currentTime = 0; video.play(); } catch (e) {}
     broadcast({ t: 'restart' });
     syncButton();
   });
+  $('muteBtn').addEventListener('click', toggleMute);
+  $('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+  video.addEventListener('timeupdate', updateTimeDisplay);
+  video.addEventListener('loadedmetadata', updateTimeDisplay);
   video.addEventListener('play', syncButton);
   video.addEventListener('pause', syncButton);
-  video.addEventListener('error', function () {
-    if (!videoUrl || isDrivePreview(videoUrl)) return;
-    if (/mediafire\.com/.test(videoUrl) && !/download\.mediafire\.com/.test(videoUrl)) {
-      toast('That\'s the Mediafire file page, not the stream link. Open the file → Download → copy the download.mediafire.com link.');
-    } else {
-      toast('That link didn\'t stream — use a direct file URL (download.mediafire.com/… or any .mp4 URL).');
+  video.addEventListener('seeked', function () {
+    if (isHost && conns.length) {
+      broadcast({ t: 'seek', time: video.currentTime });
     }
+  });
+  video.addEventListener('error', function () {
+    toast('Video failed to load. For Google Drive links, keep share access "Anyone with the link" and try a direct .mp4/.webm URL instead.');
   });
   $('chatSend').addEventListener('click', sendChat);
   $('chatInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sendChat(); });
@@ -536,9 +570,26 @@
     inp.value = '';
   }
   document.addEventListener('keydown', function (e) {
-    if (e.code === 'Space' && e.target.tagName !== 'INPUT' && videoUrl) {
+    if ((e.target && e.target.matches && e.target.matches('input, textarea, select, [contenteditable="true"]')) || !videoUrl) return;
+    if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();
+    } else if (e.key === 'f' || e.key === 'F') {
+      toggleFullscreen();
+    } else if (e.key === 'm' || e.key === 'M') {
+      toggleMute();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      video.currentTime = Math.max(0, video.currentTime - 5);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      video.volume = Math.min(1, Math.round((video.volume + 0.05) * 100) / 100);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      video.volume = Math.max(0, Math.round((video.volume - 0.05) * 100) / 100);
     }
   });
   function setStatus(text, online) {
@@ -546,23 +597,12 @@
     $('status').className = 'status' + (online ? ' online' : '');
   }
 
-  document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && peer) {
-      // tab came back to foreground — if the peer dropped, bring it back
-      if (peer.disconnected) { try { peer.reconnect(); } catch (e) {} }
-    }
-  });
-
   var q = new URLSearchParams(location.search);
-  var autoRoom = q.get('room');
-  var autoVideo = q.get('v');
+  var autoRoom = (q.get('room') || q.get('r') || '').trim().toUpperCase();
   if (autoRoom) {
+    $('roomCode').value = autoRoom;
     $('roomPanel').classList.remove('hidden');
     joinRoom(autoRoom);
-  }
-  if (autoVideo) {
-    // load the shared video (a drive preview URL or direct URL)
-    try { setVideo(autoVideo); } catch (e) {}
   }
 })();
 </script>
