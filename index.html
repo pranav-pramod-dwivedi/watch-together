@@ -109,6 +109,7 @@
   .controls { display: flex; gap: 0.6rem; justify-content: center; align-items: center; padding: 1rem 0 0; flex-wrap: wrap; }
   .controls button { min-width: 100px; }
   .time-display { font-size: 0.85rem; color: var(--muted); font-family: ui-monospace, Menlo, monospace; padding: 0 0.5rem; }
+  .shortcuts { color: #5b6472; font-size: 0.78rem; text-align: center; margin-top: 0.75rem; line-height: 1.7; }
   .chatlog {
     max-height: 180px;
     overflow-y: auto;
@@ -184,6 +185,7 @@
       <button class="ghost" id="fullscreenBtn" disabled aria-label="Toggle fullscreen">⛶ Fullscreen</button>
       <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
     </div>
+    <p class="shortcuts">Space play/pause &middot; F fullscreen &middot; M mute &middot; &larr;/&rarr; seek 5s &middot; &uarr;/&darr; volume</p>
   </section>
 
   <!-- Chat -->
