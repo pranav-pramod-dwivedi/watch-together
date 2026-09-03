@@ -197,7 +197,7 @@
   </section>
 </main>
 
-<footer>Free &amp; temporary — no accounts on this app, no servers, nothing stored. Video streams from your own Google Drive.</footer>
+<footer>Free & temporary — no accounts on this app, no servers, nothing stored. Video streams from your own Google Drive.</footer>
 
 <div class="toast hidden" id="toast"></div>
 
@@ -389,9 +389,13 @@
   // ---------- video ----------
   function formatTime(sec) {
     if (isNaN(sec) || !isFinite(sec)) return '0:00';
-    var m = Math.floor(sec / 60);
-    var s = Math.floor(sec % 60);
-    return m + ':' + (s < 10 ? '0' : '') + s;
+    sec = Math.floor(sec);
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var s = sec % 60;
+    var ss = (s < 10 ? '0' : '') + s;
+    var mm = (m < 10 ? '0' : '') + m;
+    return h > 0 ? h + ':' + mm + ':' + ss : m + ':' + ss;
   }
   function updateTimeDisplay() {
     var cur = video.currentTime || 0;
