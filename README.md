@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/host-GitHub%20Pages-24292e" alt="host" />
 </p>
 
-Video sits on **your Google Drive**. You hit create room, send one link, and when
+Video site on **your Google Drive**. You hit create room, send one link, and when
 anyone presses play, pause or restart, everyone else gets dragged along with them.
 There's also a chat box, for the "*did you catch that*" moments.
 
@@ -42,7 +42,7 @@ Permanent home is just enabling **Settings → Pages → branch `master`, folder
 
 ## The Google Drive catch
 
-Small files stream fine. Once they're bigger (roughly 100 MB+) Drive starts handing the
+Small files stream fine. Once they're bigger (roughly 100 MB+) Drive starts handling the
 browser a download page instead of a watchable video, and the app will tell you it
 broke. At that point just use a direct `.mp4` link and carry on.
 
