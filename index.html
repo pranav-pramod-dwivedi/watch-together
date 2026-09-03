@@ -632,7 +632,7 @@
     inp.value = '';
   }
   document.addEventListener('keydown', function (e) {
-    if ((e.target && e.target.matches && e.target.matches('input, textarea, select, [contenteditable="true"]')) || !videoUrl) return;
+    if ((e.target && e.target.matches && e.target.matches('input, textarea, select, [contenteditable="true"], [role="slider"]')) || !videoUrl) return;
     if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();
