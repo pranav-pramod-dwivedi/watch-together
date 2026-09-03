@@ -203,8 +203,8 @@
     <h2>Chat</h2>
     <div class="chatlog" id="chatlog" role="log" aria-live="polite"></div>
     <div class="row">
-      <input type="text" id="chatInput" placeholder="Say something…" aria-label="Chat input" />
-      <button id="chatSend">Send</button>
+      <input type="text" id="chatInput" placeholder="Say something…" aria-label="Chat input" maxlength="2000" autocomplete="off" />
+      <button id="chatSend" aria-label="Send message">Send</button>
     </div>
   </section>
 </main>
@@ -382,8 +382,13 @@
   }
 
   function joinRoom(code) {
-    code = (code || '').trim().toUpperCase();
+    code = (code || '').trim();
     if (!code) return toast('Enter a room code.');
+    if (code.indexOf('?r=') !== -1) code = code.split('?r=')[1].split('&')[0];
+    else if (code.indexOf('?room=') !== -1) code = code.split('?room=')[1].split('&')[0];
+    else if (code.indexOf('?R=') !== -1) code = code.split('?R=')[1].split('&')[0];
+    code = code.replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
+    if (!code) return toast('Enter a valid room code.');
     roomCode = code;
     isHost = false;
     peer = new Peer('g-' + Math.random().toString(36).slice(2, 8));
@@ -565,6 +570,7 @@
     var inp = $('chatInput');
     var text = inp.value.trim();
     if (!text) return;
+    if (text.length > 2000) text = text.slice(0, 2000);
     appendChat('me', text);
     broadcast({ t: 'chat', m: text });
     inp.value = '';

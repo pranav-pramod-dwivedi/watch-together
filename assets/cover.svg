@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="watch-together — private synced viewing">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e1116"/>
+      <stop offset="50%" stop-color="#141922"/>
+      <stop offset="100%" stop-color="#0b0e13"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4f8cff"/>
+      <stop offset="100%" stop-color="#35c47f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="65%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#4f8cff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#4f8cff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Subtle grid lines -->
+  <g stroke="#262d38" stroke-width="1" opacity="0.4">
+    <line x1="120" y1="0" x2="120" y2="630"/>
+    <line x1="1080" y1="0" x2="1080" y2="630"/>
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="510" x2="1200" y2="510"/>
+  </g>
+
+  <!-- Player icon illustration -->
+  <g transform="translate(860, 190)">
+    <rect width="220" height="150" rx="16" fill="#171c24" stroke="#262d38" stroke-width="2"/>
+    <polygon points="100,60 135,75 100,90" fill="#4f8cff"/>
+    <circle cx="190" cy="30" r="6" fill="#35c47f"/>
+  </g>
+
+  <!-- Typography -->
+  <g transform="translate(120, 220)">
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" letter-spacing="3" fill="#4f8cff" text-transform="uppercase">PEER-TO-PEER WATCH PARTY</text>
+    <text y="70" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="800" letter-spacing="-1.5" fill="#e6e9ee">
+      watch<tspan fill="#4f8cff">-together</tspan>
+    </text>
+    <text y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="400" fill="#8b95a3">
+      Private synced viewing for friends — no servers, no accounts.
+    </text>
+    <g transform="translate(0, 190)">
+      <rect width="400" height="42" rx="8" fill="#171c24" stroke="#262d38" stroke-width="1"/>
+      <text x="20" y="27" font-family="ui-monospace, Menlo, monospace" font-size="16" fill="#35c47f">● direct stream &amp; zero storage</text>
+    </g>
+  </g>
+
+  <!-- Bottom highlight strip -->
+  <rect x="0" y="624" width="1200" height="6" fill="url(#accentGrad)"/>
+</svg>
