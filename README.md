@@ -29,8 +29,20 @@ Open it, create room, send the invite. Finding a friend is on you.
 - Paste a Drive link, or any video URL ending in `.mp4`, `.webm` or `.mkv`.
 - Create room gives you a 5-letter code and an invite link with the code already in it.
 - Friends join and auto-sync to wherever you are in the movie.
-- Only play, pause and restart. No seek bar, so nobody can jump ahead and spoil it.
+- Play, pause and restart, plus a seekbar you can drag to scrub. Late joiners auto-sync to the host's position.
 - Space bar plays / pauses. Chat's there if you want it.
+
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| `Space` | Play / pause |
+| `F` | Fullscreen toggle |
+| `M` | Mute toggle |
+| `←` / `→` | Seek 5 s back / forward |
+| `↑` / `↓` | Volume up / down |
+| `Home` / `End` | Jump to start / end |
+| `PageUp` / `PageDown` | Skip 30 s forward / back |
 
 ## Run it yourself
 
