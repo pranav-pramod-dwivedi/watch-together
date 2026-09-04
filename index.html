@@ -165,6 +165,21 @@
     .seekbar { transition: none; }
     .seekbar .progress { transition: none; }
   }
+
+  /* keyboard focus indicators (WCAG 2.4.7 Focus Visible) */
+  button:focus-visible,
+  input:focus-visible,
+  [role="slider"]:focus-visible,
+  .linkline code:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+  button:focus:not(:focus-visible),
+  input:focus:not(:focus-visible),
+  [role="slider"]:focus:not(:focus-visible),
+  .linkline code:focus:not(:focus-visible) {
+    outline: none;
+  }
 </style>
 </head>
 <body>
@@ -199,7 +214,7 @@
       <input type="text" id="roomCode" placeholder="…or enter a room code to join" aria-label="Room code" />
       <button class="ghost" id="joinRoom">Join</button>
     </div>
-    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode"></code> — send this link. Late joiners auto-sync.</p>
+    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode" tabindex="0" role="button" aria-label="Copy invite link"></code> — send this link. Late joiners auto-sync.</p>
   </section>
 
   <!-- Stage -->
