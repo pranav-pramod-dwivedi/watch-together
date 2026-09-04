@@ -250,7 +250,7 @@
 
 <footer>Free & temporary — no accounts on this app, no servers, nothing stored. Video streams from your own Google Drive.</footer>
 
-<div class="toast hidden" id="toast"></div>
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
@@ -562,6 +562,7 @@
   document.addEventListener('fullscreenchange', syncFullscreenBtn);
   document.addEventListener('webkitfullscreenchange', syncFullscreenBtn);
   document.addEventListener('mozfullscreenchange', syncFullscreenBtn);
+  document.addEventListener('MSFullscreenChange', syncFullscreenBtn);
 
   var CODE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function randCode() {
@@ -673,6 +674,7 @@
       video.currentTime = Math.max(0, video.currentTime - 5);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      if (video.muted) { video.muted = false; $('muteBtn').textContent = '🔊 Mute'; }
       video.volume = Math.min(1, Math.round((video.volume + 0.05) * 100) / 100);
       toast('Volume: ' + Math.round(video.volume * 100) + '%');
     } else if (e.key === 'ArrowDown') {
