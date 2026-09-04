@@ -495,8 +495,11 @@
     var div = document.createElement('div');
     div.className = kind;
     div.textContent = (kind === 'me' ? 'you: ' : kind === 'them' ? 'them: ' : '') + text;
+    // Only auto-scroll for incoming messages when the user is already near the
+    // bottom, so reading older messages isn't interrupted. Own messages always scroll.
+    var nearBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
     log.appendChild(div);
-    log.scrollTop = log.scrollHeight;
+    if (kind === 'me' || nearBottom) log.scrollTop = log.scrollHeight;
   }
 
   // ---------- UI wiring ----------
