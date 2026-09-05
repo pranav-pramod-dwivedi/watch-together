@@ -587,10 +587,14 @@
   document.addEventListener('MSFullscreenChange', syncFullscreenBtn);
 
   // ---------- wiring ----------
-  $('loadUrl').addEventListener('click', function () {
+  function loadFromInput() {
     var url = toStreamUrl($('videoUrl').value);
     if (!url) return toast('Could not parse that link.');
     setVideo(url);
+  }
+  $('loadUrl').addEventListener('click', loadFromInput);
+  $('videoUrl').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); loadFromInput(); }
   });
 
   $('createRoom').addEventListener('click', function () {
@@ -599,6 +603,9 @@
 
   $('joinRoom').addEventListener('click', function () {
     joinRoom($('roomCode').value);
+  });
+  $('roomCode').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); joinRoom($('roomCode').value); }
   });
 
   $('playBtn').addEventListener('click', togglePlay);
