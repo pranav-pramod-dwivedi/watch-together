@@ -22,16 +22,33 @@ on the app, no servers, no credit card, nothing stored. Your video streams from
 5. Friends open the link → auto-join → anyone can **Play / Pause / Restart** and everyone follows. Chat included.
 6. Done? **Delete the Drive file** — that's the cleanup. Nothing else to remove.
 
+## Keyboard shortcuts
+
+Shortcuts are active whenever the video is loaded and you're not typing in an input field.
+
+| Key | Action |
+| --- | --- |
+| `Space` | Play / pause |
+| `F` | Fullscreen toggle |
+| `M` | Mute toggle |
+| `←` / `→` | Seek 5 s back / forward |
+| `↑` / `↓` | Volume up / down |
+| `Home` / `End` | Jump to start / end |
+| `PageUp` / `PageDown` | Skip 30 s forward / back |
+
+When the host seeks with any of the arrow / Home / End / PageUp / PageDown keys,
+the new position is broadcast to everyone in the room so they stay in sync.
+
 ## Notes
 
-- The `<video>` element has **no seek bar** by design — play, pause, restart only.
+- The `<video>` element has **no visible seek bar** by design — control playback with
+  the buttons and the keyboard shortcuts above. Seeking via keyboard is synced to the room.
 - Late joiners auto-sync: they get the video + playing state when they connect.
 - The app converts Drive share links into the streamable URL automatically
   (`drive.google.com/uc?export=download&id=…`). Direct `.mp4/.webm/.mkv` URLs work too.
 - Sync runs through PeerJS's free public broker (`0.peerjs.com`). If that service is
   ever down, rooms won't connect until it's back.
 - The Drive link is the only credential — keep it private (don't post it publicly).
-- Space bar toggles play/pause.
 
 ## Run locally
 
