@@ -1,1 +1,736 @@
-content
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0e1116" />
+<title>watch-together â€” private synced viewing</title>
+<meta name="description" content="Free, temporary, card-free watch party: share a Google Drive link, friends watch in sync. No accounts, no servers, nothing stored." />
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #171c24;
+    --line: #262d38;
+    --text: #e6e9ee;
+    --muted: #8b95a3;
+    --brand: #4f8cff;
+    --brand-dark: #2f6bd6;
+    --ok: #35c47f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segue UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  header .logo { font-weight: 800; letter-spacing: 0.02em; }
+  header .logo span { color: var(--brand); }
+  header .status { color: var(--muted); font-size: 0.85rem; display: flex; align-items: center; }
+  header .status .dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #555; margin-right: 0.4rem; vertical-align: middle;
+  }
+  header .status.online .dot { background: var(--ok); }
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .panel h2 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.9rem; }
+  .row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+  input[type="text"], input[type="url"] {
+    flex: 1; min-width: 200px;
+    background: #0e1116;
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 0.65rem 0.8rem;
+    font: inherit;
+    outline: none;
+  }
+  input:focus { border-color: var(--brand); }
+  button {
+    background: var(--brand);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1.1rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  button:hover { background: var(--brand-dark); }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
+  button.ghost:hover { border-color: var(--brand); color: var(--brand); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .hint { color: var(--muted); font-size: 0.88rem; margin-top: 0.6rem; line-height: 1.5; }
+  .hint code {
+    background: #0e1116; border: 1px solid var(--line); border-radius: 5px;
+    padding: 0.1rem 0.4rem; color: var(--brand); font-size: 0.85rem;
+  }
+  .stage {
+    background: #000;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stage video { width: 100%; height: 100%; object-fit: contain; }
+  .stage .placeholder { color: var(--muted); text-align: center; padding: 1rem; font-size: 0.95rem; }
+  .seekbar {
+    position: relative;
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    margin: 0.9rem 0 0;
+    cursor: pointer;
+    overflow: hidden;
+    transition: height 0.15s;
+  }
+  .seekbar:hover { height: 8px; }
+  .seekbar .progress {
+    height: 100%;
+    background: var(--brand);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+  .seekbar .buffered {
+    position: absolute;
+    top: 0; left: 0; height: 100%;
+    background: rgba(255,255,255,0.12);
+    border-radius: 3px;
+    width: 0%;
+  }
+  .controls { display: flex; gap: 0.6rem; justify-content: center; align-items: center; padding: 1rem 0 0; flex-wrap: wrap; }
+  .controls button { min-width: 100px; }
+  .time-display { font-size: 0.85rem; color: var(--muted); font-family: ui-monospace, Menlo, monospace; padding: 0 0.5rem; }
+  .shortcuts { color: #5b6472; font-size: 0.78rem; text-align: center; margin-top: 0.75rem; line-height: 1.7; }
+  .chatlog {
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.92rem;
+  }
+  .chatlog .me { color: var(--brand); font-weight: 600; }
+  .chatlog .them { color: var(--ok); font-weight: 600; }
+  .chatlog .sys { color: var(--muted); font-style: italic; }
+  .linkline { color: var(--muted); font-size: 0.85rem; word-break: break-all; }
+  .linkline code {
+    background: #0e1116; border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.2rem 0.5rem; color: var(--brand); cursor: pointer; user-select: all;
+  }
+  footer { text-align: center; color: #5b6472; font-size: 0.8rem; padding: 1rem; }
+  .hidden { display: none !important; }
+  .toast {
+    position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    padding: 0.6rem 1.1rem; border-radius: 999px; font-size: 0.9rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 50;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+    .seekbar { transition: none; }
+    .seekbar .progress { transition: none; }
+  }
+
+  /* keyboard focus indicators (WCAG 2.4.7 Focus Visible) */
+  button:focus-visible,
+  input:focus-visible,
+  [role="slider"]:focus-visible,
+  .linkline code:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+  button:focus:not(:focus-visible),
+  input:focus:not(:focus-visible),
+  [role="slider"]:focus:not(:focus-visible),
+  .linkline code:focus:not(:focus-visible) {
+    outline: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">watch<span>-together</span></div>
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">not connected</span></div>
+</header>
+
+<main>
+  <!-- Step 1: video source -->
+  <section class="panel" id="sourcePanel">
+    <h2>1 Â· Video</h2>
+    <div class="row">
+      <input type="url" id="videoUrl" placeholder="Paste a Google Drive link or any direct video URÌš" span aria-label="Video URL" />
+      <button id="loadUrl">Load</button>
+    </div>
+    <p class="hint">
+      <strong>Google Drive (1-3 GB, free, no card):</strong> upload the file to Drive â‰ 
+right-click âˆš <em>Share</em> â‚ˆ <em>General access: Anyone with the link â‚ˆ Viewer</em> â–
+Scopy the link and paste it here. The link is the only credential â€” keep it private,
+      delete the Drive file when you're done watching.
+    </p>
+    <p class="hint">Any direct URL ending in <code>.mp4</code> / <code>.webm</code> / <code>.mkv</code> orks oo.</p>
+  </section>
+
+  <!-- Step 2: room -->
+  <section class="panel hidden" id="roomPanel">
+    <h2>2 Â» Room</h2>
+    <div class="row" style="margin-bottom:0.9rem">
+      <button id="createRoom">â‚­ Create room</button>
+      <input type="text" id="roomCode" placeholder="â€¦r enter a room code to join" aria-label="Room code" />
+      <button class="ghost" id="joinRoom">Join</button>
+    </div>
+    <p class="linkline hidden" id="inviteLine">Invite: <code id="inviteCode" tabindex="0" role="button" aria-label="Copy invite link"></code> â€”- send this link. Late joiners auto-sync.</p>
+  </section>
+
+  <!-- Stage -->
+  <section class="panel hidden" id="stagePanel">
+    <div class="stage" id="stage">
+      <div class="placeholder" id="stagePlaceholder">Waiting for a videoâ€¦</div>
+      <video id="video" preload="auto" playinline></video>
+    </div>
+    <div class="seekbar" id="seekbar" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+      <div class="buffered" id="seekBuffered"></div>
+      <div class="progress" id="seekProgress"></div>
+    </div>
+    <div class="controls">
+      <button id="playBtn" disabled aria-label="Play or pause video">â˜š Play</button>
+      <button class="ghost" id="restartBtn" disabled aria-label="Restart video">â†¶ Restart</button>
+      <button class="ghost" id="muteBtn" disabled aria-label="Toggle mute">ğŸ‘ª Mute</button>
+      <button class="ghost" id="fullscreenBtn" disabled aria-label="Toggle fullscreen">ğŸ¥¶ Fullscreen</button>
+      <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+    </div>
+    <p class="shortcuts">Space play/pause &middot; F fullscreen &middot; M mute &middot; &larr;/&rarr; seek 5s &middot; &uarr;/&darr; volume &middot; Home/End start/end &middot; PgUp/PgDn skip 30s</p>
+  </section>
+
+  <!-- Chat -->
+  <section class="panel hidden" id="chatPanel">
+    <h2>Chat</h2>
+    <div class="chatlog" id="chatlog" role="log" aria-live="polite"></div>
+    <div class="row">
+      <input type="text" id="chatInput" placeholder="Say somethingâ€¦" aria-label="Chat input" />
+      <button id="chatSend">Send</button>
+    </div>
+  </section>
+</main>
+
+<footer>Free & temporary --no accounts on this app, no servers, nothing stored. Video streams from your own Google Drive.</footer>
+
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(see () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var video = $('video');
+  var toastTimer = null;
+
+  // Cached DOM refs for the timeupdate hot path (~5Ã—/s during playback)
+  var timeDisplayEl = $('timeDisplay');
+  var seekProgressEl = $('seekProgress');
+  var seekbarElCached = $('seekbar');
+  var seekBufferedEl = $('seekBuffered');
+
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 3500);
+  }
+
+  // --------- state ----------
+  var peer = null;
+  var conns = [];
+  var isHost = false;
+  var roomCode = null;
+  var videoUrl = null;
+
+  // --------- Streamable URL Converters (Drive, Dropbox, Direct) ----------
+  function driveIdFrom(link) {
+    var m;
+    m = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    m = link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    m = link.match(/\/open\?id=([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    m = link.match(/\/uc\?id=([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    return null;
+  }
+  function toStreamUrl(link) {
+    link = (link || '').trim().replace(/^["']|["']$/g, '');
+    if (!link) return null;
+    if (/drive\.google\.com/.test(link)) {
+      var id = driveIdFrom(link);
+      if (!id) return null;
+      return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
+    }
+    if (/dropbox\.com/.test(link)) {
+      if (link.includes('?dl=0') return link.replace('?dl=0', '?raw=1');
+      if (link.includes('&dl=0')) return link.replace('&dl=0', '&raw=1');
+      return link.includes('?') ? link + '&raw=1' : link + '?raw=1';
+    }
+    if (/github\.com\/[^/]+\/[^/]+\/blob\//.test(link)) {
+      return link.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+    }
+    return link;
+  }
+
+  // --------- PeerJS ----------
+  function broadcast(msg) {
+    var payload = JSON.stringify(msg);
+    conns.forEach(function (c) { if (c.open) c.send(payload); });
+  }
+  function handleMsg(data, c) {
+    var m;
+    try {
+      m = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (e) {
+      return;
+    }
+    if (!m || !m.t) return;
+
+    if (isHost && c) {
+      var raw = typeof data === 'string' ? data : JSON.stringify(data);
+      conns.forEach(function (conn) {
+        if (conn !== c && conn.open) conn.send(raw);
+      });
+    }
+
+    switch (m.t) {
+      case 'video':
+        if (!videoUrl || ideoUrl !== m.url) setVideo(m.url);
+        break;
+      case 'play':
+        if (typeof m.time === 'number' && Math.abs(video.currentTime - m.time) > 1.5) {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
+        try { video.play(); } catch (e) {}
+        syncButton();
+        break;
+      case 'pause':
+        if (typeof m.time === 'number' && Math.abs(video.currentTime - m.time) > 0.5) {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
+        try { video.pause(); } catch (e) {}
+        syncButton();
+        break;
+      case 'seek':
+        if (typeof m.time === 'number') {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
+        syncButton();
+        break;
+      case 'restart':
+        try { video.currentTime = 0; video.play(); } catch (e) {}
+        syncButton();
+        break;
+      case 'chat':
+        appendChat('them', m.m);
+        break;
+      case 'sync':
+        if (m.url && (!videoUrl || videoUrl !== m.url)) setVideo(m.url);
+        if (typeof m.time === 'number') {
+          try { video.currentTime = m.time; } catch (e) {}
+        }
+        if (m.playing) {
+          try { video.play(); } catch (e) {}
+        } else {
+          try { video.pause(); } catch (e) {}
+        }
+        syncButton();
+        break;
+    }
+  }
+  function wireConn(c, onOpen) {
+    c.on('open', function () {
+      conns.push(c);
+      setStatus('connected to room ' + roomCode, true);
+      if (isHost) {
+        c.send(JSON.stringify({
+          t: 'sync',
+          url: videoUrl,
+          playing: !video.paused && video.currentTime > 0,
+          time: video.currentTime || 0
+        }));
+        appendChat('sys', 'Someone joined the room.');
+      }
+      onOpen && onOpen();
+    });
+    c.on('data', function (data) { handleMsg(data, c); });
+    c.on('close', function () {
+      conns = conns.filter(function (x) { return x !== c; });
+      if (isHost) appendChat('sys', 'Someone left the room.');
+      if (!isHost && conns.length === 0) setStatus('disconnected', false);
+    });
+    c.on('error', function () {});
+  }
+
+  function makeRoom() {
+    roomCode = randCode();
+    isHost = true;
+    peer = new Peer(roomCode);
+    peer.on('open', function (id) {
+      setStatus('hosting room ' + id, true);
+      $('inviteLine').classList.remove('hidden');
+      $('inviteCode').textContent = location.origin + location.pathname + '?room=' + id;
+      showStage();
+    });
+    peer.on('connection', function (c) { wireConn(c); });
+    peer.on('error', function (err) {
+      if (err.type === 'unavailable-id') {
+        toast('Room code taken â€” try again.');
+        peer.destroy();
+        peer = null;
+        isHost = false;
+      } else if (err.type === 'network' || err.type === 'server-error') {
+        toast('Sync broker unreachable --check internet.');
+      }
+    });
+  }
+
+  function joinRoom(code) {
+    code = (code || '').trim().toUpperCase();
+    if (!code) return toast('Enter a room code.');
+    roomCode = code;
+    isHost = false;
+    peer = new Peer('g-' + Math.random().toString(36).slice(2, 8));
+    peer.on('open', function () {
+      setStatus('joining ' + roomCode + 'â€¦, false);
+      var c = peer.connect(code, { reliable: true });
+      wireConn(c, function () { showStage(); });
+    });
+    peer.on('error', function (err) {
+      if (err.type === 'peer-unavailable') toast('Room not found â€” check the code.');
+      else if (err.type === 'network' || err.type === 'server-error') toast('Sync broker unreachable --check internet.');
+    });
+  }
+
+  // ---------- video ----------
+  function formatTime(sec) {
+    if (isNAN(sec) || !isFinite(sec)) return '0:00';
+    sec = Math.flor(sec);
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var s = sec % 60;
+    var ss = (s < 10 ? '0' : '') + s;
+    var mm = (m < 10 ? '0' : '') + m;
+    return h > 0 ? h + ':' + mm + ':' + ss : m + ':' + ss;
+  }
+  function updateTimeDisplay() {
+    var cur = video.currentTime || 0;
+    var dur = video.duration || 0;
+    timeDisplayEl.textContent = formatTime(cur) + ' / ' + formatTime(dur);
+    var pct = dur > 0 ? (cur / dur) * 100 : 0;
+    seekProgressEl.style.width = pct + '%';
+    seekbarElCached.setAttribute('aria-valuenow', Math.round(pct));
+    seekbarElCached.setAttribute('aria-valuetext', formatTime(cur) + ' of ' + formatTime(dur));
+    // buffered indicator
+    if (video.buffered && video.buffered.length > 0 && dur > 0) {
+      var end = video.buffered.end(video.buffered.length - 1);
+      seekBufferedEl.style.width = Math.min(100, (end / dur) * 100) + '%';
+    }
+  }
+
+  function seekToFraction(frac) {
+    frac = Math.max(0, Math.min(1, frac));
+    var dur = video.duration || 0;
+    if (!dur || !isFinite(dur)) return;
+    var t = frac * dur;
+    try { video.currentTime = t; } catch (e) {}
+    updateTimeDisplay();
+    if (isHost && conns.length) broadcast({ t: 'seek', time: t });
+  }
+
+  var seekbarEl = $('seekbar');
+  var dragging = false;
+  function seekbarFrac(e) {
+    var rect = seekbarEl.getBoundingClientRect();
+    var x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    return Math.max(0, Math.min(1, x / rect.width));
+  }
+  seekbarEl.addEventListener('mousedown', function (e) { dragging = true; seekToFraction(seekbarFrac(e)); });
+  seekbarEl.addEventListener('touchstart', function (e) { dragging = true; seekToFraction(seekbarFrac(e)); }, { passive: true });
+  document.addEventListener('mousemove', function (e) { if (dragging) seekToFraction(seekbarFrac(e)); });
+  document.addEventListener('touchmove', function (e) { if (dragging) seekToFraction(seekbarFrac(e)); }, { passive: true });
+  document.addEventListener('mouseup', function () { dragging = false; });
+  document.addEventListener('touchend', function () { dragging = false; });
+  seekbarEl.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); seekToFraction((video.currentTime - 5) / (video.duration || 1)); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seekToFraction((video.currentTime + 5) / (video.duration || 1)); }
+    else if (e.key === 'Home') { e.preventDefault(); seekToFraction(0); }
+    else if (e.key === 'End') { e.preventDefault(); seekToFraction(1); }
+    else if (e.key === 'PageUp') { e.preventDefault(); seekToFraction((video.currentTime + 30) / (video.duration || 1)); }
+    else if (e.key === 'PageDown') { e.preventDefault(); seekToFraction((video.currentTime - 30) / (video.duration || 1)); }
+  });
+
+  function setVideo(url) {
+    videoUrl = url;
+    video.src = url;
+    video.load();
+    $('stagePlaceholder').classList.add('hidden');
+    $('roomPanel').classList.remove('hidden');
+    $('stagePanel').classList.remove('hidden');
+    $('playBtn').disabled = false;
+    $('restartBtn').disabled = false;
+    $('muteBtn').disabled = false;
+    $('fullscreenBtn').disabled = false;
+    if (isHost && conns.length) broadcast({ t: 'video', url: url });
+    toast('Video loaded' + (isHost ? ' â€” shared with the room.' : ''));
+  }
+  function showStage() {
+    $('roomPanel').classList.remove('hidden');
+    $('stagePanel').classList.remove('hidden');
+    $('chatPanel').classList.remove('hidden');
+  }
+  function syncButton() {
+    $('playBtn').textContent = video.paused ? 'â˜š Play' : 'â˜â˜ÂŒPause';
+  }
+  function togglePlay() {
+    if (!videoUrl) return;
+    var willPlay = video.paused;
+    if (willPlay) {
+      video.play().catch(function () {});
+    } else {
+      video.pause();
+    }
+    broadcast({ t: willPlay ? 'play' : 'pause', time: video.currentTime });
+    syncButton();
+  }
+
+  function toggleMute() {
+    video.muted = !video.muted;
+    $('muteBtn').textContent = video.muted ? 'ğŸ‘¯ Unmute' : 'ğŸ‘ƒÂŒMute';
+  }
+
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitPullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+  }
+
+  function syncFullscreenBtn() {
+    $('fullscreenBtn').textContent = isFullscreen() ? 'ğŸÔ Exit Fullscreen' : 'ğŸ¥¶ Fullscreen';
+  }
+
+  function toggleFullscreen() {
+    var elem = $('stage');
+    if (!isFullscreen()) {
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+  }
+
+  document.addEventListener('fullscreenchange', syncFullscreenBtn);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenBtn);
+  document.addEventListener('mozy[ØÜ™Y[˜Ú[™ÙIËŞ[˜Ñ[ØÜ™Y[ŠNÂˆØİ[Y[˜Y]™[\İ[™\Š	ÓTÑ[ØÜ™Y[Ú[™ÙIËŞ[˜Ñ[ØÜ™Y[ŠNÂ‚ˆ˜\ˆÓÑHH	ĞPÑQ‘Ò’ÓS”T”ÕU•ÖVLŒÍMÎIÎÂˆ[˜İ[Ûˆ˜[™ÛÙJ
+HÂˆ˜\ˆÈH	ÉÎÂˆ›Üˆ
+˜\ˆHHÈHNÈJÊÊHÈ
+ÏHÓÑVÓX]™›ÛÜŠX]œ˜[™ÛJ
+H
+ˆÓÑK›[™İ
+WNÂˆ™]\›ˆÎÂˆB‚ˆËÈKKKKKKKKKHÚ]KKKKKKKKKBˆ[˜İ[Ûˆ\[™Ú]
+Ú[™^
+HÂˆ˜\ˆÙÈH	
+	ØÚ]ÙÉÊNÂˆ˜\ˆ]ˆHØİ[Y[˜Ü™X]Q[[Y[
+	Ù]‰ÊNÂˆ]‹˜Û\ÜÓ˜[YHHÚ[™Âˆ]‹^ÛÛ[H
+Ú[™OOH	ÛYIÈÈ	Ş[İNˆ	ÈˆÚ[™OOH	İ[IÈÈ	İ[Nˆ	Èˆ	ÉÊH
+È^ÂˆÙË˜\[™Ú[
+]ŠNÂˆÙËœØÜ›ÛÜHÙËœØÜ›ÛZYÚÂˆB‚ˆËÈKKKKKKKKKHRHÚ\š[™ÈKKKKKKKKKBˆ	
+	ÛØY\›	ÊK˜Y]™[\İ[™\Š	ØÛXÚÉË[˜İ[Ûˆ
+
+HÂˆ˜\ˆ˜]ÈH	
+	İšY[Õ\›	ÊK˜[YKš[J
+NÂˆYˆ
+\˜]ÊH™]\›ˆØ\İ
+	Ô\İHHÛÛÙÛHš]™H[šÈÜˆ\™XİšY[ÈT“š\œİ‰ÊNÂˆ˜\ˆ\›HÔİ™X[U\›
+˜]ÊNÂˆYˆ
+]\›
+H™]\›ˆØ\İ
+Ûİ[‰İ™XY][šÈ8 %\ÙHHš]™HÚ\™H[šÈ
+š[KÙø #İšY]ÊHÜˆH\™Xİ›\T“ˆŠNÂˆÙ]šY[Ê\›
+NÂˆJNÂˆ	
+	İšY[Õ\›	ÊK˜Y]™[\İ[™\Š	ÚÙ^YİÛ‰Ë[˜İ[Ûˆ
+JHÂˆYˆ
+KšÙ^HOOH	Ñ[\‰ÊH	
+	ÛØY\›	ÊK˜ÛXÚÊ
+NÂˆJNÂˆ	
+	ØÜ™X]T›ÛÛIÊK˜Y]™[\İ[™\Š	ØÛXÚÉËXZÙT›ÛÛJNÂˆ	
+	Ú›Ú[”›ÛÛIÊK˜Y]™[\İ[™\Š	ØÛXÚÉË[˜İ[Ûˆ
+
+HÈ›Ú[”›ÛÛJ	
+	ÃÜ›ÛÛPÛÙIÊK˜[YJNÈJNÂˆ	
+	Ü›ÛÛPÛÙIÊK˜Y]™[\İ[™\Š	ÚÙ^YİÛ‰Ë[˜İ[Ûˆ
+JHÂˆYˆ
+KšÙ^HOOH	Ñ[\‰ÊH	
+	Ú›Ú[”›ÛÛIÊK˜ÛXÚÊ
+NÂˆJNÂˆ[˜İ[Ûˆ˜[˜XÚĞÛÜJ^
+HÂˆ˜\ˆHHØİ[Y[˜Ü™X]Q[[Y[
+	İ^\™XIÊNÂˆK˜[YHH^ÂˆKœİ[KœÜÚ][ÛˆH	Ùš^Y	ÎÂˆKœİ[K›ÜXÚ]HH	Ì	ÎÂˆØİ[Y[˜›ÙK˜\[™Ú[
+JNÂˆK™›Øİ\Ê
+NÂˆKœÙ[Xİ
+
+NÂˆHÈØİ[Y[™^XĞÛÛ[X[™
+	ØÛÜIÊNÈHØ]Ú
+JHßBˆØİ[Y[˜›ÙKœ™[[İ™PÚ[
+JNÂˆB‚ˆ	
+	Ú[š]PÛÙIÊK˜Y]™[\İ[™\Š	ØÛXÚÉË[˜İ[Ûˆ
+
+HÂˆ˜\ˆ\›H\Ë^ÛÛ[ÂˆYˆ
+]\›
+H™]\›ÂˆYˆ
+˜]šYØ]Ü‹˜Û\›Ø\™	‰ˆ˜]šYØ]Ü‹˜Û\›Ø\™Üš]U^
+HÂˆ˜]šYØ]Ü‹˜Û\›Ø\™Üš]U^
+\›
+K[Š[˜İ[Ûˆ
+
+HÂˆØ\İ
+	Ò[š]H[šÈÛÜYYÈÛ\›Ø\™IÊNÂˆJK˜Ø]Ú
+[˜İ[Ûˆ
+
+HÂˆ˜[˜XÚĞÛÜJ\›
+NÂˆØ\İ
+	Ò[š]H[šÈÛÜYYÈÛ\›Ø\™IÊNÂˆJNÂˆH[ÙHÂˆ˜[˜XÚĞÛÜJ\›
+NÂˆØ\İ
+	Ò[š]H[šÈÛÜYYÈÛ\›Ø\™IÊNÂˆBˆJNÂˆ	
+	Ü^P‰ÊK˜Y]™[\İ[™\Š	ØÛXÚÉËÙÙÛT^JNÂˆ	
+	Ü™\İ\‰ÊK˜Y]™[\İ[™\Š	ØÛXÚÉË[˜İ[Ûˆ
+
+HÂˆYˆ
+]šY[Õ\›
+H™]\›ÂˆHÈšY[Ë˜İ\œ™[[YHHÈšY[Ëœ^J
+NÈHØ]Ú
+JHßBˆœ›ØYØ\İ
+Èˆ	Ü™\İ\	ÈJNÂˆŞ[˜Ğ]ÛŠ
+NÂˆJNÂˆ	
+	Û]]P‰ÊK˜Y]™[\İ[™\Š	ØÛXÚÉËÙÙÛS]]JNÂˆ	
+	Ù[ØÜ™Y[‰ÊK˜Y]™[\İ[™\Š	ØÛXÚÉËÙÙÛQ[ØÜ™Y[ŠNÂ‚ˆšY[Ë˜Y]™[\İ[™\Š	İ[Y]\]IË\]U[YQ\Ü^JNÂˆšY[Ë˜Y]™[\İ[™\Š	ÛØYYY]Y]IË\]U[YQ\Ü^JNÂˆšY[Ë˜Y]™[\İ[™\Š	Ü›ÙÜ™\ÜÉË\]U[YQ\Ü^JNÂˆšY[Ë˜Y]™[\İ[™\Š	Ü^IËŞ[˜Ğ]ÛŠNÂˆšY[Ë˜Y]™[\İ[™\Š	Ü]\ÙIËŞ[˜Ğ]ÛŠNÂˆšY[Ë˜Y]™[\İ[™\Š	ÜÙYZÙY	Ë[˜İ[Ûˆ
+
+HÂˆYˆ
+\ÒÜİ	‰ˆÛÛ›œË›[™İ
+HÂˆœ›ØYØ\İ
+Èˆ	ÜÙYZÉË[YNˆšY[Ë˜İ\œ™[[YHJNÂˆBˆJNÂˆšY[Ë˜Y]™[\İ[™\Š	Ù\œ›Ü‰Ë[˜İ[Ûˆ
+
+HÂˆØ\İ
+	ÕšY[È˜Z[YÈØYˆ›ÜˆÛÛÙÛHš]™H[šÜËÙY\Ú\™HXØÙ\ÜÈ[[Û™HÚ]H[šÈˆ[™HH\™Xİ›\ËÙX›HT“[œİXY‰ÊNÂˆJNÂˆ	
+	ØÚ]Ù[™	ÊK˜Y]™[\İ[™\Š	ØÛXÚÉËÙ[™Ú]
+NÂˆ	
+	ØÚ][œ]	ÊK˜Y]™[\İ[™\Š	ÚÙ^YİÛ‰Ë[˜İ[Ûˆ
+JHÈYˆ
+KšÙ^HOOH	Ñ[\‰ÊHÙ[™Ú]
+
+NÈJNÂˆ[˜İ[ÛˆÙ[™Ú]
+
+HÂˆ˜\ˆ[œH	
+	ØÚ][œ]	ÊNÂˆ˜\ˆ^H[œ˜[YKš[J
+NÂˆYˆ
+]^
+H™]\›Âˆ\[™Ú]
+	ÛYIË^
+NÂˆœ›ØYØ\İ
+Èˆ	ØÚ]	ËNˆ^JNÂˆ[œ˜[YHH	ÉÎÂˆBˆØİ[Y[˜Y]™[\İ[™\Š	ÚÙ^YİÛ‰Ë[˜İ[Ûˆ
+JHÂˆYˆ
+
+K\™Ù]	‰ˆK\™Ù]›X]Ú\È	‰ˆK\™Ù]›X]Ú\Ê	Ú[œ]^\™XKÙ[XİØÛÛ[Y]X›OHYH—KÜ›ÛOHœÛY\ˆ—IÊJH]šY[Õ\›
+H™]\›ÂˆYˆ
+K˜ÛÙHOOH	ÔÜXÙIÊHÂˆKœ™]™[Y˜][
+
+NÂˆÙÙÛT^J
+NÂˆH[ÙHYˆ
+KšÙ^HOOH	Ù‰ÈKšÙ^HOOH	Ñ‰ÊHÂˆÙÙÛQ[ØÜ™Y[Š
+NÂˆH[ÙHYˆ
+KšÙ^HOOH	ÛIÈKšÙ^HOOH	ÓIÊHÂˆÙÙÛS]]J
+NÂˆH[ÙHYˆ
+KšÙ^HOOH	Ğ\œ›İÔšYÚ	ÊHÂˆKœ™]™[Y˜][
+
+NÂˆšY[Ë˜İ\œ™[[YHHX]›Z[ŠšY[Ë™\˜][ÛˆšY[Ë˜İ\œ™[[YH
+ÈJNÂˆH[ÙHYˆ
+KšÙ^HOOH	Ğ\œ›İÓY	ÊHÂˆKœ™]™[Y˜][
+
+NÂˆšY[Ë˜İ\œ™[[YHHX]›X^
+šY[Ë˜İ\œ™[[YHHJNÂˆH[ÙHYˆ
+KšÙ^HOOH	Ğ\œ›İÕ\	ÊHÂˆKœ™]™[Y˜][
+
+NÂˆYˆ
+šY[Ë›]]Y
+HÈšY[Ë›]]YH˜[ÙNÈ	
+	Û]]P‰ÊK^ÛÛ[H	ğŸ‘ƒÂŒMute'; }
+      video.volume = Math.min(1, Math.round((video.volume + 0.05) * 100) / 100);
+      toast('Volume: ' + Math.round(video.volume * 100) + '%');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      video.volume = Math.max(0, Math.round((video.volume - 0.05) * 100) / 100);
+      toast('Volume: ' + Math.round(video.volume * 100) + '%');
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      video.currentTime = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      video.currentTime = video.duration || 0;
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      video.currentTime = Math.min(video.duration || 0, video.currentTime + 30);
+    } else if (e.key === 'PageDown') {
+      e.preventDefault();
+      video.currentTime = Math.max(0, video.currentTime - 30);
+    }
+  });
+  function setStatus(text, online) {
+    $('statusText').textContent = text;
+    $('status').className = 'status' + (online ? ' online' : '');
+  }
+
+  var q = new URLParams(location.search);
+  var autoRoom = (q.get('room') || q.get('r') || '').trim().toUpperCase();
+  if (autoRoom) {
+    $('roomCode').value = autoRoom;
+    $('roomPanel').classList.remove('hidden');
+    joinRoom(autoRoom);
+  }
+})();
+</script>
+</body>
+</html>
