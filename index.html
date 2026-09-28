@@ -583,6 +583,28 @@
     syncButton();
   }
 
+  function saveVolumeState() {
+    try {
+      localStorage.setItem('wt_volume', String(video.volume));
+      localStorage.setItem('wt_muted', video.muted ? '1' : '0');
+    } catch (e) {}
+  }
+  function loadVolumeState() {
+    try {
+      var savedVol = localStorage.getItem('wt_volume');
+      if (savedVol !== null) {
+        var v = parseFloat(savedVol);
+        if (!isNaN(v) && isFinite(v)) video.volume = Math.max(0, Math.min(1, v));
+      }
+      var savedMuted = localStorage.getItem('wt_muted');
+      if (savedMuted === '1') {
+        video.muted = true;
+        $('muteBtn').textContent = '🔇 Unmute';
+      }
+    } catch (e) {}
+  }
+  loadVolumeState();
+
   function toggleMute() {
     video.muted = !video.muted;
     $('muteBtn').textContent = video.muted ? '🔇 Unmute' : '🔊 Mute';
@@ -685,6 +707,7 @@
   video.addEventListener('loadedmetadata', updateTimeDisplay);
   video.addEventListener('play', syncButton);
   video.addEventListener('pause', syncButton);
+  video.addEventListener('volumechange', saveVolumeState);
 
   // ---------- keyboard shortcuts ----------
   document.addEventListener('keydown', function (e) {
