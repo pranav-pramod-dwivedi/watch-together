@@ -1,0 +1,18 @@
+{
+  "name": "watch-together",
+  "version": "1.1.0",
+  "description": "Watch parties for friends who live far apart — no accounts, no servers.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "watch-party",
+    "video-sync",
+    "webrtc",
+    "peerjs",
+    "serverless"
+  ],
+  "author": "Pranav Pramod Dwivedi",
+  "license": "MIT"
+}
