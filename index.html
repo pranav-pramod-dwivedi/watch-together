@@ -234,6 +234,13 @@
       <button class="ghost" id="restartBtn" disabled aria-label="Restart video">↺ Restart</button>
       <button class="ghost" id="muteBtn" disabled aria-label="Toggle mute">🔊 Mute</button>
       <button class="ghost" id="fullscreenBtn" disabled aria-label="Toggle fullscreen">⛶ Fullscreen</button>
+      <select id="speedSelect" class="ghost" style="padding:0.65rem 0.6rem; border-radius:8px; background:transparent; border:1px solid var(--line); color:var(--text); font:inherit; cursor:pointer;" disabled aria-label="Playback speed">
+        <option value="0.75" style="background:var(--panel);">0.75×</option>
+        <option value="1" selected style="background:var(--panel);">1×</option>
+        <option value="1.25" style="background:var(--panel);">1.25×</option>
+        <option value="1.5" style="background:var(--panel);">1.5×</option>
+        <option value="2" style="background:var(--panel);">2×</option>
+      </select>
       <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
     </div>
     <p class="shortcuts">Space play/pause &middot; F fullscreen &middot; M mute &middot; &larr;/&rarr; seek 5s &middot; &uarr;/&darr; volume &middot; Home/End start/end &middot; PgUp/PgDn skip 30s</p>
@@ -372,10 +379,25 @@
       case 'chat':
         appendChat('them', m.m);
         break;
+      case 'rate':
+        if (typeof m.rate === 'number' && m.rate > 0 && m.rate <= 4) {
+          try {
+            video.playbackRate = m.rate;
+            if ($('speedSelect')) $('speedSelect').value = String(m.rate);
+            toast('Speed: ' + m.rate + '×');
+          } catch (e) {}
+        }
+        break;
       case 'sync':
         if (m.url && (!videoUrl || videoUrl !== m.url)) setVideo(m.url);
         if (typeof m.time === 'number') {
           try { video.currentTime = m.time; } catch (e) {}
+        }
+        if (typeof m.rate === 'number' && m.rate > 0) {
+          try {
+            video.playbackRate = m.rate;
+            if ($('speedSelect')) $('speedSelect').value = String(m.rate);
+          } catch (e) {}
         }
         if (m.playing) {
           try { video.play(); } catch (e) {}
@@ -395,7 +417,8 @@
           t: 'sync',
           url: videoUrl,
           playing: !video.paused && video.currentTime > 0,
-          time: video.currentTime || 0
+          time: video.currentTime || 0,
+          rate: video.playbackRate || 1
         }));
         appendChat('sys', 'Someone joined the room.');
       }
@@ -536,6 +559,7 @@
     $('restartBtn').disabled = false;
     $('muteBtn').disabled = false;
     $('fullscreenBtn').disabled = false;
+    if ($('speedSelect')) $('speedSelect').disabled = false;
     if (isHost && conns.length) broadcast({ t: 'video', url: url });
     toast('Video loaded' + (isHost ? ' — shared with the room.' : ''));
   }
@@ -624,6 +648,14 @@
   });
   $('muteBtn').addEventListener('click', toggleMute);
   $('fullscreenBtn').addEventListener('click', toggleFullscreen);
+  if ($('speedSelect')) {
+    $('speedSelect').addEventListener('change', function () {
+      var rate = parseFloat(this.value) || 1;
+      video.playbackRate = rate;
+      if (isHost && conns.length) broadcast({ t: 'rate', rate: rate });
+      toast('Speed: ' + rate + '×' + (isHost ? ' — shared' : ''));
+    });
+  }
 
   $('chatSend').addEventListener('click', function () {
     var input = $('chatInput');
