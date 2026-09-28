@@ -287,7 +287,9 @@
   // --------- Streamable URL Converters (Drive, Dropbox, Direct) ----------
   function driveIdFrom(link) {
     var m;
-    m = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    m = link.match(/\/file\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/);
+    if (m) return m[1];
+    m = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
     m = link.match(/[?&]id=([a-zA-Z0-9_-]+)/);
     if (m) return m[1];
@@ -300,14 +302,16 @@
   function toStreamUrl(link) {
     link = (link || '').trim().replace(/^["']|["']$/g, '');
     if (!link) return null;
+    if (!/^https?:\/\//i.test(link)) return null;
     if (/drive\.google\.com/.test(link)) {
       var id = driveIdFrom(link);
       if (!id) return null;
       return 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(id);
     }
     if (/dropbox\.com/.test(link)) {
-      if (link.includes('?dl=0')) return link.replace('?dl=0', '?raw=1');
-      if (link.includes('&dl=0')) return link.replace('&dl=0', '&raw=1');
+      if (/[?&]dl=[01]/.test(link)) {
+        return link.replace(/([?&])dl=[01]/, '$1raw=1');
+      }
       return link.includes('?') ? link + '&raw=1' : link + '?raw=1';
     }
     if (/github\.com\/[^/]+\/[^/]+\/blob\//.test(link)) {
